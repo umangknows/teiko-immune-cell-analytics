@@ -58,10 +58,10 @@ Part 4 writes baseline subset counts by project, response, and sex, plus the req
 
 The dashboard is organized for a project review rather than raw data inspection:
 
-- `Overview`: trial composition, cohort balance, coverage, and the main statistical readout.
-- `Cell Frequencies`: filterable frequency trends, sample-type comparisons, and treatment heatmaps.
-- `Miraclib Response`: effect sizes, adjusted p-values, boxplots, and exploratory prediction importance.
-- `Subset Queries`: visual answers to the baseline melanoma PBMC miraclib subset questions, with audit tables available on demand.
+- `Overview`: trial composition, sample-type coverage, the required Part 3 cohort, and the main statistical readout.
+- `Part 2: Cell Frequencies`: filterable relative-frequency trends and cohort composition charts, with the exact required output table available for audit.
+- `Part 3: Miraclib Response`: baseline and all-timepoint responder comparisons with plain-language labels, effect-size direction, statistical evidence, distribution plots, and exploratory prediction context.
+- `Part 4: Required Queries`: visual answers to the baseline melanoma PBMC miraclib subset questions, with audit tables available on demand.
 
 Raw tables are kept in expandable audit sections so the first view emphasizes insight while still preserving traceability.
 
