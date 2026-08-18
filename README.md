@@ -4,6 +4,8 @@ This project loads clinical-trial immune cell counts into SQLite, computes per-s
 
 Repository: `https://github.com/umangknows/teiko-immune-cell-analytics`
 
+Dashboard: `https://teiko-immune-cell-analytics.streamlit.app/`
+
 ## Run
 
 ```bash
@@ -12,7 +14,7 @@ make pipeline
 make dashboard
 ```
 
-The local dashboard runs at `http://localhost:8501`. The app is ready for free deployment on Streamlit Community Cloud from a GitHub repository using `dashboard.py` as the entry point.
+The local dashboard runs at `http://localhost:8501`. The public Streamlit dashboard is available at `https://teiko-immune-cell-analytics.streamlit.app/`.
 
 ## Outputs
 
@@ -77,10 +79,12 @@ Raw tables are kept in expandable audit sections so the first view emphasizes in
 
 ## Deployment
 
-Recommended free deployment: Streamlit Community Cloud.
+The dashboard is deployed on Streamlit Community Cloud:
 
-1. Push this repository to GitHub.
-2. Go to `https://share.streamlit.io`.
-3. Create an app from the repository.
-4. Use `dashboard.py` as the entry point.
-5. Add the resulting `streamlit.app` URL here.
+`https://teiko-immune-cell-analytics.streamlit.app/`
+
+Deployment configuration:
+
+- Repository: `umangknows/teiko-immune-cell-analytics`
+- Branch: `main`
+- Entry point: `dashboard.py`
