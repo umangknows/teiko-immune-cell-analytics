@@ -2,6 +2,8 @@
 
 This project loads clinical-trial immune cell counts into SQLite, computes per-sample cell population frequencies, compares melanoma PBMC miraclib responders against non-responders, and serves an interactive Streamlit dashboard.
 
+Repository: `https://github.com/umangknows/teiko-immune-cell-analytics`
+
 ## Run
 
 ```bash
