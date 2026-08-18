@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.pytest_tmp/
+outputs/.matplotlib/
+outputs/test_analysis.db
+.streamlit/secrets.toml
+

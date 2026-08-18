@@ -1,0 +1,2 @@
+model,samples,cv_folds,cross_validated_auc,note
+logistic_regression_baseline_pbmc,656,5,0.489,Exploratory signal only; not clinically validated.

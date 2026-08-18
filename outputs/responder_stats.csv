@@ -1,0 +1,11 @@
+analysis,population,n_responders,n_non_responders,median_responder_pct,median_non_responder_pct,median_difference_pct,p_value,effect_size_rank_biserial,adjusted_p_value,significant_fdr_0_05,signal_rank
+primary_baseline,monocyte,331,325,19.6056,20.286,-0.6804,0.211389,-0.0564,0.885328,False,1
+primary_baseline,cd8_t_cell,331,325,24.3957,24.601,-0.2053,0.513956,-0.0295,0.885328,False,2
+primary_baseline,b_cell,331,325,9.785,9.7582,0.0269,0.548541,0.0271,0.885328,False,3
+primary_baseline,cd4_t_cell,331,325,29.6338,29.5305,0.1033,0.79645,0.0116,0.885328,False,4
+primary_baseline,nk_cell,331,325,14.9973,14.8905,0.1069,0.885328,-0.0065,0.885328,False,5
+exploratory_all_timepoints,cd4_t_cell,993,975,30.2206,29.6576,0.563,0.013344,0.0644,0.066721,False,1
+exploratory_all_timepoints,b_cell,993,975,9.4323,9.7884,-0.3561,0.055702,-0.0498,0.139256,False,2
+exploratory_all_timepoints,nk_cell,993,975,14.5093,14.7991,-0.2899,0.121051,-0.0404,0.201751,False,3
+exploratory_all_timepoints,monocyte,993,975,19.6097,19.9423,-0.3326,0.16315,-0.0363,0.203938,False,4
+exploratory_all_timepoints,cd8_t_cell,993,975,24.728,24.6031,0.125,0.639086,-0.0122,0.639086,False,5
