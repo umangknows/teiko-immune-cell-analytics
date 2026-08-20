@@ -23,6 +23,54 @@ st.set_page_config(page_title="Teiko Immune Cell Analytics", layout="wide")
 RESPONSE_LABELS = {"yes": "Responder", "no": "Non-responder"}
 POPULATION_COLORS = ["#E45756", "#F2CF5B", "#54A24B", "#4C78A8", "#72B7B2"]
 
+st.markdown(
+    """
+    <style>
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+        max-width: 1320px;
+    }
+    div[data-testid="stMetric"] {
+        background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(241, 245, 249, 0.72));
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        border-radius: 8px;
+        padding: 0.85rem 1rem;
+    }
+    div[data-testid="stMetricLabel"] {
+        color: #475569;
+        font-weight: 600;
+    }
+    .insight-card {
+        border: 1px solid rgba(148, 163, 184, 0.28);
+        border-left: 5px solid #2B8CBE;
+        border-radius: 8px;
+        padding: 1rem 1.1rem;
+        background: rgba(248, 250, 252, 0.86);
+        min-height: 150px;
+    }
+    .insight-card h3 {
+        font-size: 1.02rem;
+        margin: 0 0 0.45rem 0;
+        color: #0f172a;
+    }
+    .insight-card p {
+        margin: 0;
+        color: #334155;
+        line-height: 1.45;
+    }
+    .section-note {
+        border-left: 4px solid #94a3b8;
+        padding: 0.65rem 0.9rem;
+        background: rgba(241, 245, 249, 0.72);
+        border-radius: 6px;
+        color: #334155;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 def with_response_labels(df: pd.DataFrame) -> pd.DataFrame:
     if "response" not in df.columns:
@@ -163,6 +211,39 @@ def median_change_from_baseline(responder: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def day14_change_summary(change_summary: pd.DataFrame) -> pd.DataFrame:
+    if change_summary.empty:
+        return pd.DataFrame()
+    work = with_response_labels(change_summary)
+    if "change_from_baseline_pct_points" in work.columns:
+        work = work.rename(columns={"change_from_baseline_pct_points": "change_from_baseline"})
+    return work[work["time_from_treatment_start"] == 14].copy()
+
+
+def insight_card(title: str, body: str) -> None:
+    st.markdown(
+        f"""
+        <div class="insight-card">
+            <h3>{title}</h3>
+            <p>{body}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def signal_strength_label(auc: float | str) -> str:
+    try:
+        value = float(auc)
+    except (TypeError, ValueError):
+        return "No model result available."
+    if value < 0.55:
+        return "Near chance; these five baseline frequencies do not form a useful predictor alone."
+    if value < 0.65:
+        return "Weak predictive signal; worth exploring with richer covariates."
+    return "Potential predictive signal; should be validated carefully."
+
+
 st.title("Teiko Immune Cell Analytics")
 st.caption(
     "A reproducible clinical-trial data pipeline and dashboard for immune cell population analysis."
@@ -185,8 +266,10 @@ with overview_tab:
     overview = dataset_overview()
     samples = load_samples()
     baseline_freq = load_responder_data(True)
+    all_timepoint_freq = load_responder_data(False)
     stats = load_csv_output("responder_stats.csv")
     model_summary = load_csv_output("exploratory_prediction_summary.csv")
+    change_summary = load_csv_output("change_from_baseline_summary.csv")
     primary = scoped_stats(stats, "primary_baseline")
 
     cols = st.columns(5)
@@ -199,13 +282,27 @@ with overview_tab:
     if not primary.empty:
         top = primary.sort_values("signal_rank").iloc[0]
         auc = model_summary.loc[0, "cross_validated_auc"] if not model_summary.empty else "N/A"
-        st.info(
-            "Main readout: baseline melanoma PBMC samples from miraclib-treated patients did not show "
-            "FDR-significant responder/non-responder differences across the five measured immune populations. "
-            f"The strongest baseline candidate was {top['population']} "
-            f"({top['direction'].lower()}, median difference {top['median_difference_pct']:.2f} percentage points, "
-            f"adjusted p={top['adjusted_p_value']:.3f}). Exploratory baseline prediction AUC was {auc}."
-        )
+        card_cols = st.columns(4)
+        with card_cols[0]:
+            insight_card(
+                "Main Finding",
+                "Baseline immune-cell frequencies did not significantly separate miraclib responders from non-responders after FDR correction.",
+            )
+        with card_cols[1]:
+            insight_card(
+                "Best Lead",
+                f"{top['population']} ranked strongest at baseline, but the effect was small and not statistically significant.",
+            )
+        with card_cols[2]:
+            insight_card(
+                "Prediction Check",
+                f"Baseline model AUC was {auc}. {signal_strength_label(auc)}",
+            )
+        with card_cols[3]:
+            insight_card(
+                "Next Step",
+                "Look beyond coarse cell-count frequencies: richer biomarkers and change-from-baseline modeling are the best next investigations.",
+            )
 
     left, right = st.columns(2)
     composition = samples.groupby(["condition", "treatment"], as_index=False)["sample"].nunique()
@@ -285,6 +382,36 @@ with overview_tab:
             - Check whether signals emerge in specific subgroups, projects, ages, sex groups, or sample types.
             - Use subject-level longitudinal models if repeated timepoints become central to the analysis.
             """
+        )
+
+    day14 = day14_change_summary(change_summary)
+    if not day14.empty:
+        st.subheader("Does anything emerge after treatment starts?")
+        day14_fig = px.bar(
+            day14.sort_values("change_from_baseline"),
+            x="change_from_baseline",
+            y="population",
+            color="response_label",
+            barmode="group",
+            orientation="h",
+            title="Day 14 median change from baseline by response group",
+            labels={
+                "change_from_baseline": "Change from day 0 (percentage points)",
+                "population": "Cell population",
+                "response_label": "Response",
+            },
+            color_discrete_map={"Responder": "#2B8CBE", "Non-responder": "#F03B20"},
+        )
+        day14_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color="gray")
+        st.plotly_chart(style_figure(day14_fig), width="stretch")
+        st.markdown(
+            """
+            <div class="section-note">
+            This is the most useful longitudinal summary: it asks whether responders and non-responders move differently after treatment begins.
+            The current pattern still looks modest, which supports the conclusion that richer biological signals would be needed for a stronger response model.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
     with st.expander("Audit preview: sample metadata"):
@@ -556,71 +683,72 @@ with response_tab:
                 "This table is the most compact answer to Part 3. It shows the direction and strength of each candidate signal, while preserving the statistical caution that none are FDR significant in the current dataset."
             )
 
-        evidence = stats.sort_values("effect_size_rank_biserial")
-        effect_fig = px.bar(
-            evidence,
-            x="effect_size_rank_biserial",
-            y="population",
-            orientation="h",
-            color="direction",
-            title="Effect size direction: which group is higher?",
-            labels={
-                "effect_size_rank_biserial": "Effect size",
-                "population": "Cell population",
-            },
-            color_discrete_map={
-                "Higher in responders": "#2B8CBE",
-                "Higher in non-responders": "#F03B20",
-            },
-            hover_data={
-                "median_difference_pct": ":.3f",
-                "adjusted_p_value": ":.4f",
-                "direction": True,
-            },
-        )
-        effect_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color="gray")
-        effect_fig.update_layout(
-            title=f"Miraclib melanoma PBMC: effect size direction ({analysis_scope})"
-        )
-        st.plotly_chart(style_figure(effect_fig), width="stretch")
-        st.info(
-            "How to read this: this chart is only for melanoma patients treated with miraclib using PBMC samples. "
-            "Bars to the right of zero are higher in responders; bars to the left are higher in non-responders. "
-            "Longer bars mean larger separation between groups. In this dataset, the bars are small, so the observed differences are weak."
-        )
+        with st.expander("Statistical evidence details", expanded=False):
+            evidence = stats.sort_values("effect_size_rank_biserial")
+            effect_fig = px.bar(
+                evidence,
+                x="effect_size_rank_biserial",
+                y="population",
+                orientation="h",
+                color="direction",
+                title="Effect size direction: which group is higher?",
+                labels={
+                    "effect_size_rank_biserial": "Effect size",
+                    "population": "Cell population",
+                },
+                color_discrete_map={
+                    "Higher in responders": "#2B8CBE",
+                    "Higher in non-responders": "#F03B20",
+                },
+                hover_data={
+                    "median_difference_pct": ":.3f",
+                    "adjusted_p_value": ":.4f",
+                    "direction": True,
+                },
+            )
+            effect_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color="gray")
+            effect_fig.update_layout(
+                title=f"Miraclib melanoma PBMC: effect size direction ({analysis_scope})"
+            )
+            st.plotly_chart(style_figure(effect_fig), width="stretch")
+            st.info(
+                "How to read this: this chart is only for melanoma patients treated with miraclib using PBMC samples. "
+                "Bars to the right of zero are higher in responders; bars to the left are higher in non-responders. "
+                "Longer bars mean larger separation between groups. In this dataset, the bars are small, so the observed differences are weak."
+            )
 
-        significance = stats.assign(
-            minus_log10_adjusted_p=lambda x: -np.log10(x["adjusted_p_value"])
-        )
-        threshold = -np.log10(0.05)
-        sig_fig = px.bar(
-            significance.sort_values("minus_log10_adjusted_p", ascending=False),
-            x="population",
-            y="minus_log10_adjusted_p",
-            color="evidence",
-            title=f"Miraclib melanoma PBMC: statistical evidence ({analysis_scope})",
-            labels={
-                "minus_log10_adjusted_p": "-log10(FDR-adjusted p-value)",
-                "population": "Cell population",
-            },
-            color_discrete_map={
-                "FDR significant": "#2B8CBE",
-                "Not significant": "#9AA0A6",
-            },
-        )
-        sig_fig.add_hline(
-            y=threshold,
-            line_width=1,
-            line_dash="dash",
-            line_color="#D62728",
-            annotation_text="FDR 0.05 threshold",
-        )
-        st.plotly_chart(style_figure(sig_fig), width="stretch")
-        st.info(
-            "How to read this: the y-axis is transformed, not a raw p-value. It shows -log10(FDR-adjusted p-value), "
-            "so stronger evidence appears taller. The dashed line corresponds to adjusted p=0.05 after correcting for five tested populations. "
-            "A bar must rise above that line to be called statistically significant. Current bars stay below the threshold."
-        )
+            significance = stats.assign(
+                minus_log10_adjusted_p=lambda x: -np.log10(x["adjusted_p_value"])
+            )
+            threshold = -np.log10(0.05)
+            sig_fig = px.bar(
+                significance.sort_values("minus_log10_adjusted_p", ascending=False),
+                x="population",
+                y="minus_log10_adjusted_p",
+                color="evidence",
+                title=f"Miraclib melanoma PBMC: statistical evidence ({analysis_scope})",
+                labels={
+                    "minus_log10_adjusted_p": "-log10(FDR-adjusted p-value)",
+                    "population": "Cell population",
+                },
+                color_discrete_map={
+                    "FDR significant": "#2B8CBE",
+                    "Not significant": "#9AA0A6",
+                },
+            )
+            sig_fig.add_hline(
+                y=threshold,
+                line_width=1,
+                line_dash="dash",
+                line_color="#D62728",
+                annotation_text="FDR 0.05 threshold",
+            )
+            st.plotly_chart(style_figure(sig_fig), width="stretch")
+            st.info(
+                "How to read this: the y-axis is transformed, not a raw p-value. It shows -log10(FDR-adjusted p-value), "
+                "so stronger evidence appears taller. The dashed line corresponds to adjusted p=0.05 after correcting for five tested populations. "
+                "A bar must rise above that line to be called statistically significant. Current bars stay below the threshold."
+            )
 
     box = px.box(
         responder,
