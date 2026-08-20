@@ -1,0 +1,11 @@
+analysis,population,responder_median_pct,non_responder_median_pct,median_difference_pct,effect_size_rank_biserial,adjusted_p_value,significant_fdr_0_05,interpretation
+primary_baseline,monocyte,19.6055804178746,20.286002186823318,-0.6804,-0.0564,0.885328,False,Higher in non-responders
+primary_baseline,cd8_t_cell,24.39568761084873,24.60102813964531,-0.2053,-0.0295,0.885328,False,Higher in non-responders
+primary_baseline,b_cell,9.785034652883825,9.758175376096343,0.0269,0.0271,0.885328,False,Higher in responders
+primary_baseline,cd4_t_cell,29.633821633005223,29.530535110403818,0.1033,0.0116,0.885328,False,Higher in responders
+primary_baseline,nk_cell,14.997332404211535,14.890453979521677,0.1069,-0.0065,0.885328,False,Higher in responders
+exploratory_all_timepoints,cd4_t_cell,30.22056448672133,29.657607004517313,0.563,0.0644,0.066721,False,Higher in responders
+exploratory_all_timepoints,b_cell,9.432277716506485,9.788394525529014,-0.3561,-0.0498,0.139256,False,Higher in non-responders
+exploratory_all_timepoints,nk_cell,14.509281611587447,14.799142593764923,-0.2899,-0.0404,0.201751,False,Higher in non-responders
+exploratory_all_timepoints,monocyte,19.60969754287689,19.942332781511407,-0.3326,-0.0363,0.203938,False,Higher in non-responders
+exploratory_all_timepoints,cd8_t_cell,24.728022127013396,24.603067146867414,0.125,-0.0122,0.639086,False,Higher in responders

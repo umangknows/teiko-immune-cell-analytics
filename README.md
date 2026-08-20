@@ -1,5 +1,7 @@
 # Teiko Immune Cell Analytics
 
+[![Teiko pipeline](https://github.com/umangknows/teiko-immune-cell-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/umangknows/teiko-immune-cell-analytics/actions/workflows/ci.yml)
+
 This project loads clinical-trial immune cell counts into SQLite, computes per-sample cell population frequencies, compares melanoma PBMC miraclib responders against non-responders, and serves an interactive Streamlit dashboard.
 
 Repository: `https://github.com/umangknows/teiko-immune-cell-analytics`
@@ -16,6 +18,24 @@ make dashboard
 
 The local dashboard runs at `http://localhost:8501`. The public Streamlit dashboard is available at `https://teiko-immune-cell-analytics.streamlit.app/`.
 
+## Reviewer Quickstart
+
+In GitHub Codespaces or a fresh Linux environment:
+
+```bash
+make setup
+make pipeline
+make test
+make dashboard
+```
+
+Expected sanity checks after `make pipeline`:
+
+- `teiko.db` exists in the repository root.
+- `outputs/frequency_summary.csv` has 52,500 rows and the exact columns `sample`, `total_count`, `population`, `count`, `percentage`.
+- `outputs/melanoma_male_bcell_answer.txt` contains `10206.15`.
+- `outputs/responder_stats.csv` reports responder/non-responder statistics for all five populations.
+
 ## Assignment Checklist
 
 | Requirement | Where implemented |
@@ -27,6 +47,7 @@ The local dashboard runs at `http://localhost:8501`. The public Streamlit dashbo
 | Part 3 melanoma + miraclib + PBMC responder analysis | `outputs/responder_stats.csv`, dashboard Part 3 |
 | Responder vs non-responder boxplots | `outputs/responder_boxplot_baseline.png`, `outputs/responder_boxplot_all_timepoints.png`, dashboard Part 3 |
 | Significant populations reported with statistics | `outputs/responder_stats.csv`, `outputs/analysis_notes.md` |
+| Response signal summary and longitudinal follow-up | `outputs/response_signal_summary.csv`, `outputs/change_from_baseline_summary.csv` |
 | Part 4 baseline subset summaries | `outputs/samples_by_project.csv`, `outputs/subjects_by_response.csv`, `outputs/subjects_by_sex.csv` |
 | Average B-cell answer with two decimals | `outputs/melanoma_male_bcell_answer.txt` |
 | `make setup` installs dependencies | `Makefile` |
@@ -42,6 +63,8 @@ The local dashboard runs at `http://localhost:8501`. The public Streamlit dashbo
 - `teiko.db`
 - `outputs/frequency_summary.csv`
 - `outputs/responder_stats.csv`
+- `outputs/response_signal_summary.csv`
+- `outputs/change_from_baseline_summary.csv`
 - `outputs/candidate_signal_scores.csv`
 - `outputs/exploratory_prediction_summary.csv`
 - `outputs/exploratory_prediction_importance.csv`

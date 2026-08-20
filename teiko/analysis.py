@@ -78,6 +78,56 @@ def responder_frequency_data(db_path=DB_FILE, baseline_only: bool = True) -> pd.
     )
 
 
+def response_signal_summary(freq: pd.DataFrame, stats: pd.DataFrame, analysis: str) -> pd.DataFrame:
+    medians = (
+        freq.groupby(["population", "response"], as_index=False)["percentage"]
+        .median()
+        .pivot(index="population", columns="response", values="percentage")
+        .rename(columns={"yes": "responder_median_pct", "no": "non_responder_median_pct"})
+        .reset_index()
+    )
+    scoped = stats[stats["analysis"] == analysis].copy()
+    summary = scoped.merge(medians, on="population", how="left")
+    summary["interpretation"] = summary.apply(
+        lambda row: (
+            "Higher in responders"
+            if row["median_difference_pct"] > 0
+            else "Higher in non-responders"
+        ),
+        axis=1,
+    )
+    columns = [
+        "analysis",
+        "population",
+        "responder_median_pct",
+        "non_responder_median_pct",
+        "median_difference_pct",
+        "effect_size_rank_biserial",
+        "adjusted_p_value",
+        "significant_fdr_0_05",
+        "interpretation",
+    ]
+    return summary[columns].sort_values(
+        "effect_size_rank_biserial", key=lambda series: series.abs(), ascending=False
+    )
+
+
+def change_from_baseline_summary(freq: pd.DataFrame) -> pd.DataFrame:
+    medians = (
+        freq.groupby(["time_from_treatment_start", "population", "response"], as_index=False)[
+            "percentage"
+        ]
+        .median()
+        .sort_values(["population", "response", "time_from_treatment_start"])
+    )
+    baseline = medians[medians["time_from_treatment_start"] == 0][
+        ["population", "response", "percentage"]
+    ].rename(columns={"percentage": "baseline_median_pct"})
+    out = medians.merge(baseline, on=["population", "response"], how="left")
+    out["change_from_baseline_pct_points"] = out["percentage"] - out["baseline_median_pct"]
+    return out.rename(columns={"percentage": "median_pct"})
+
+
 def baseline_subset_summary(db_path=DB_FILE) -> dict[str, pd.DataFrame]:
     samples = read_sql(
         """

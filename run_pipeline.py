@@ -4,8 +4,10 @@ import pandas as pd
 
 from teiko.analysis import (
     baseline_subset_summary,
+    change_from_baseline_summary,
     frequency_summary,
     melanoma_male_responder_bcell_average,
+    response_signal_summary,
     responder_frequency_data,
 )
 from teiko.config import DB_FILE, OUTPUT_DIR
@@ -35,6 +37,16 @@ def main() -> None:
     )
     stats.to_csv(OUTPUT_DIR / "responder_stats.csv", index=False)
     signal_scores(stats).to_csv(OUTPUT_DIR / "candidate_signal_scores.csv", index=False)
+    pd.concat(
+        [
+            response_signal_summary(baseline_freq, stats, "primary_baseline"),
+            response_signal_summary(all_timepoint_freq, stats, "exploratory_all_timepoints"),
+        ],
+        ignore_index=True,
+    ).to_csv(OUTPUT_DIR / "response_signal_summary.csv", index=False)
+    change_from_baseline_summary(all_timepoint_freq).to_csv(
+        OUTPUT_DIR / "change_from_baseline_summary.csv", index=False
+    )
 
     model_summary, model_importance = exploratory_prediction(baseline_freq)
     model_summary.to_csv(OUTPUT_DIR / "exploratory_prediction_summary.csv", index=False)
