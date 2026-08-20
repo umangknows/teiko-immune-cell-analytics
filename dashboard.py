@@ -21,6 +21,7 @@ from teiko.config import DB_FILE, OUTPUT_DIR
 st.set_page_config(page_title="Teiko Immune Cell Analytics", layout="wide")
 
 RESPONSE_LABELS = {"yes": "Responder", "no": "Non-responder"}
+POPULATION_COLORS = ["#E45756", "#F2CF5B", "#54A24B", "#4C78A8", "#72B7B2"]
 
 
 def with_response_labels(df: pd.DataFrame) -> pd.DataFrame:
@@ -79,6 +80,59 @@ def scoped_stats(stats: pd.DataFrame, analysis: str) -> pd.DataFrame:
         {True: "FDR significant", False: "Not significant"}
     )
     return out
+
+
+def short_direction(direction: str) -> str:
+    if direction == "Higher in responders":
+        return "Responders higher"
+    return "Non-responders higher"
+
+
+def population_order_by_median(df: pd.DataFrame) -> list[str]:
+    return (
+        df.groupby("population")["percentage"]
+        .median()
+        .sort_values(ascending=False)
+        .index.tolist()
+    )
+
+
+def population_color_map(population_order: list[str]) -> dict[str, str]:
+    return {
+        population: POPULATION_COLORS[index % len(POPULATION_COLORS)]
+        for index, population in enumerate(population_order)
+    }
+
+
+def frequency_takeaway(filtered: pd.DataFrame, median_by_time: pd.DataFrame) -> str:
+    population_order = population_order_by_median(filtered)
+    dominant = population_order[0]
+    changes = []
+    for population, group in median_by_time.groupby("population"):
+        ordered = group.sort_values("time_from_treatment_start")
+        first = float(ordered.iloc[0]["percentage"])
+        last = float(ordered.iloc[-1]["percentage"])
+        changes.append((population, last - first, first, last))
+    largest = max(changes, key=lambda item: abs(item[1]))
+    direction = "increased" if largest[1] > 0 else "decreased"
+    return (
+        f"In the selected cohort, {dominant} has the highest median relative frequency. "
+        f"The largest day 0 to day 14 movement is {largest[0]}, which {direction} by "
+        f"{abs(largest[1]):.2f} percentage points ({largest[2]:.2f}% to {largest[3]:.2f}%). "
+        "Small movements suggest composition is fairly stable under the current filters."
+    )
+
+
+def response_scope_note(baseline_only: bool) -> str:
+    if baseline_only:
+        return (
+            "These statistics use only day 0 samples. Each subject contributes one baseline PBMC sample, "
+            "so this is the cleanest responder/non-responder comparison."
+        )
+    return (
+        "These statistics pool day 0, day 7, and day 14 PBMC samples. That makes the view useful for "
+        "pattern discovery, but the same subject can contribute multiple rows."
+    )
 
 
 st.title("Teiko Immune Cell Analytics")
@@ -245,6 +299,8 @@ with frequency_tab:
     if filtered.empty:
         st.warning("No rows match the selected filters.")
     else:
+        population_order = population_order_by_median(filtered)
+        color_map = population_color_map(population_order)
         median_by_time = (
             filtered.groupby(["population", "time_from_treatment_start"], as_index=False)[
                 "percentage"
@@ -261,15 +317,17 @@ with frequency_tab:
                     color="population",
                     markers=True,
                     title="How does median immune composition change over treatment time?",
+                    category_orders={"population": population_order},
+                    color_discrete_map=color_map,
                     labels={
                         "percentage": "Median relative frequency (%)",
                         "time_from_treatment_start": "Days from treatment start",
                     },
-                    color_discrete_sequence=px.colors.qualitative.Safe,
                 )
             ),
             width="stretch",
         )
+        st.info(frequency_takeaway(filtered, median_by_time))
 
         left, right = st.columns(2)
         population_mix = (
@@ -286,10 +344,14 @@ with frequency_tab:
                     title="Which populations dominate the selected cohort?",
                     labels={"percentage": "Median relative frequency (%)"},
                     color="population",
-                    color_discrete_sequence=px.colors.qualitative.Safe,
+                    category_orders={"population": population_order},
+                    color_discrete_map=color_map,
                 )
             ),
             width="stretch",
+        )
+        left.caption(
+            "This ranks the selected samples by median population percentage. It is a simple composition summary, not a significance test."
         )
 
         by_sample_type = (
@@ -309,6 +371,9 @@ with frequency_tab:
                 )
             ),
             width="stretch",
+        )
+        right.caption(
+            "This compares median composition between PBMC and whole-blood samples when both are present in the filtered data."
         )
 
     with st.expander("Audit table: exact Part 2 output columns"):
@@ -345,13 +410,30 @@ with response_tab:
         )
 
     if not stats.empty:
+        st.caption(response_scope_note(baseline_only))
         best = stats.sort_values("signal_rank").iloc[0]
         significant_count = int(stats["significant_fdr_0_05"].sum())
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Top candidate", best["population"])
-        c2.metric("Direction", best["direction"])
-        c3.metric("Median difference", f"{best['median_difference_pct']:.2f} pts")
-        c4.metric("FDR-significant populations", significant_count)
+        c1.metric(
+            "Top candidate",
+            best["population"],
+            help="Population with the largest absolute responder/non-responder effect size in this scope.",
+        )
+        c2.metric(
+            "Direction",
+            short_direction(best["direction"]),
+            help="Shows which response group has the higher relative frequency for the top candidate.",
+        )
+        c3.metric(
+            "Median difference",
+            f"{best['median_difference_pct']:.2f} pts",
+            help="Responder median percentage minus non-responder median percentage. Negative means non-responders are higher.",
+        )
+        c4.metric(
+            "FDR significant",
+            significant_count,
+            help="Number of populations with Benjamini-Hochberg adjusted p-value below 0.05.",
+        )
 
         evidence = stats.sort_values("effect_size_rank_biserial")
         effect_fig = px.bar(
@@ -377,6 +459,10 @@ with response_tab:
         )
         effect_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color="gray")
         st.plotly_chart(style_figure(effect_fig), width="stretch")
+        st.info(
+            "How to read this: bars to the right of zero are higher in responders; bars to the left are higher in non-responders. "
+            "Longer bars mean larger separation between groups. In this dataset, the bars are small, so the observed differences are weak."
+        )
 
         significance = stats.assign(
             minus_log10_adjusted_p=lambda x: -np.log10(x["adjusted_p_value"])
@@ -405,6 +491,11 @@ with response_tab:
             annotation_text="FDR 0.05 threshold",
         )
         st.plotly_chart(style_figure(sig_fig), width="stretch")
+        st.info(
+            "How to read this: the dashed line is the FDR 0.05 threshold after correcting for testing five populations. "
+            "A bar must rise above that line to be called statistically significant. Current bars stay below the threshold, "
+            "so the dashboard reports no significant population-level frequency differences."
+        )
 
     box = px.box(
         responder,
@@ -417,6 +508,9 @@ with response_tab:
         color_discrete_map={"Responder": "#2B8CBE", "Non-responder": "#F03B20"},
     )
     st.plotly_chart(style_figure(box), width="stretch")
+    st.caption(
+        "Each box summarizes the distribution of relative frequencies for one population. Clear vertical separation between responder and non-responder boxes would suggest a stronger response-associated signal."
+    )
 
     if not baseline_only:
         trend = (
@@ -443,6 +537,10 @@ with response_tab:
         )
         trend_fig.update_yaxes(matches=None)
         st.plotly_chart(style_figure(trend_fig), width="stretch")
+        st.info(
+            "This view shows median relative frequency over days 0, 7, and 14 separately for responders and non-responders. "
+            "It helps reveal whether a signal appears after treatment starts, even if the baseline-only comparison is weak."
+        )
 
     if baseline_only and not model_summary.empty:
         st.subheader("Exploratory predictive signal")
@@ -462,6 +560,9 @@ with response_tab:
             color_discrete_sequence=["#4C78A8"],
         )
         right.plotly_chart(style_figure(importance_fig), width="stretch")
+        st.caption(
+            "These coefficients show which baseline populations the exploratory logistic model leaned on most. The AUC near 0.50 says that leaning did not translate into useful predictive performance."
+        )
 
     with st.expander("Audit table: statistical results"):
         st.dataframe(stats, width="stretch", hide_index=True)
@@ -470,6 +571,10 @@ with query_tab:
     st.subheader("Required Part 4 database query results")
     st.caption(
         "These visuals answer the exact subset questions for baseline melanoma PBMC samples treated with miraclib."
+    )
+    st.info(
+        "This tab is intentionally narrow: Part 4 specifically asks for baseline melanoma PBMC miraclib samples, "
+        "counts by project/response/sex, and the average B-cell count for melanoma male responders at time 0."
     )
 
     subset = baseline_subset_summary()
@@ -521,6 +626,7 @@ with query_tab:
     st.metric(
         "Average B-cell count for melanoma male responders at time 0",
         f"{avg_b:.2f}",
+        help="This exact two-decimal value is requested in Part 4. It uses melanoma male responders at time 0 across all sample and treatment types, as specified by the prompt.",
     )
 
     with st.expander("Audit tables: subset query results"):
