@@ -22,29 +22,25 @@ st.set_page_config(page_title="Teiko Immune Cell Analytics", layout="wide")
 
 RESPONSE_LABELS = {"yes": "Responder", "no": "Non-responder"}
 
-INK = "#111827"
+INK = "#1F2937"
 MUTED = "#6B7280"
-PANEL = "#F8FAFC"
-BORDER = "#E5E7EB"
-GRID = "#F1F5F9"
-ACCENT = "#2563EB"
-ACCENT_DARK = "#1E40AF"
-CHARCOAL = "#374151"
-MID_GRAY = "#9CA3AF"
-LIGHT_GRAY = "#CBD5E1"
-SOFT_BLUE = "#93C5FD"
-POPULATION_COLORS = [ACCENT, INK, CHARCOAL, MID_GRAY, SOFT_BLUE]
-RESPONSE_COLORS = {"Responder": ACCENT, "Non-responder": INK}
-SAMPLE_TYPE_COLORS = {"PBMC": ACCENT, "WB": MID_GRAY}
-EVIDENCE_COLORS = {"FDR significant": ACCENT, "Not significant": LIGHT_GRAY}
-TREATMENT_COLORS = {"miraclib": ACCENT, "phauximab": MID_GRAY}
+BORDER = "#D1D5DB"
+GRID = "#E5E7EB"
+BLUE = "#1F77B4"
+ORANGE = "#FF7F0E"
+GREEN = "#2CA02C"
+RED = "#D62728"
+PURPLE = "#9467BD"
+GRAY = "#7F7F7F"
+POPULATION_COLORS = [BLUE, ORANGE, GREEN, RED, PURPLE]
+RESPONSE_COLORS = {"Responder": BLUE, "Non-responder": ORANGE}
+SAMPLE_TYPE_COLORS = {"PBMC": BLUE, "WB": GRAY}
+EVIDENCE_COLORS = {"FDR significant": BLUE, "Not significant": GRAY}
+TREATMENT_COLORS = {"miraclib": BLUE, "phauximab": ORANGE}
 
 st.markdown(
     """
     <style>
-    html, body, [class*="css"] {
-        color: #111827;
-    }
     .block-container {
         padding-top: 1.5rem;
         padding-bottom: 3rem;
@@ -52,63 +48,10 @@ st.markdown(
     }
     h1 {
         letter-spacing: 0;
-        color: #111827;
         padding-bottom: 0.1rem;
     }
     h2, h3 {
-        color: #111827;
         letter-spacing: 0;
-    }
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 0.35rem;
-        border-bottom: 1px solid #E5E7EB;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 2.6rem;
-        color: #6B7280;
-        border-radius: 6px 6px 0 0;
-    }
-    .stTabs [aria-selected="true"] {
-        color: #111827;
-        background: #F8FAFC;
-        border: 1px solid #E5E7EB;
-        border-bottom: 1px solid #F8FAFC;
-    }
-    div[data-testid="stMetric"] {
-        background: #FFFFFF;
-        border: 1px solid #E5E7EB;
-        border-radius: 8px;
-        padding: 0.85rem 1rem;
-        box-shadow: none;
-    }
-    div[data-testid="stMetricLabel"] {
-        color: #6B7280;
-        font-weight: 600;
-    }
-    .insight-card {
-        border: 1px solid #E5E7EB;
-        border-top: 3px solid #2563EB;
-        border-radius: 8px;
-        padding: 1rem 1.1rem;
-        background: #FFFFFF;
-        min-height: 150px;
-    }
-    .insight-card h3 {
-        font-size: 1.02rem;
-        margin: 0 0 0.45rem 0;
-        color: #111827;
-    }
-    .insight-card p {
-        margin: 0;
-        color: #374151;
-        line-height: 1.45;
-    }
-    .section-note {
-        border-left: 3px solid #2563EB;
-        padding: 0.65rem 0.9rem;
-        background: #F8FAFC;
-        border-radius: 6px;
-        color: #374151;
     }
     div[data-testid="stAlert"] {
         border-radius: 8px;
@@ -288,15 +231,9 @@ def day14_change_summary(change_summary: pd.DataFrame) -> pd.DataFrame:
 
 
 def insight_card(title: str, body: str) -> None:
-    st.markdown(
-        f"""
-        <div class="insight-card">
-            <h3>{title}</h3>
-            <p>{body}</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    with st.container(border=True):
+        st.markdown(f"**{title}**")
+        st.write(body)
 
 
 def signal_strength_label(auc: float | str) -> str:
@@ -349,28 +286,33 @@ with overview_tab:
     if not primary.empty:
         top = primary.sort_values("signal_rank").iloc[0]
         auc = model_summary.loc[0, "cross_validated_auc"] if not model_summary.empty else "N/A"
-        card_cols = st.columns(4)
-        with card_cols[0]:
+        st.divider()
+        st.subheader("Executive readout")
+        top_left, top_right = st.columns(2)
+        with top_left:
             insight_card(
                 "Main Finding",
                 "Baseline immune-cell frequencies did not significantly separate miraclib responders from non-responders after FDR correction.",
             )
-        with card_cols[1]:
+        with top_right:
             insight_card(
                 "Best Lead",
                 f"{top['population']} ranked strongest at baseline, but the effect was small and not statistically significant.",
             )
-        with card_cols[2]:
+        bottom_left, bottom_right = st.columns(2)
+        with bottom_left:
             insight_card(
                 "Prediction Check",
                 f"Baseline model AUC was {auc}. {signal_strength_label(auc)}",
             )
-        with card_cols[3]:
+        with bottom_right:
             insight_card(
                 "Next Step",
                 "Look beyond coarse cell-count frequencies: richer biomarkers and change-from-baseline modeling are the best next investigations.",
             )
 
+    st.divider()
+    st.subheader("Cohort context")
     left, right = st.columns(2)
     composition = samples.groupby(["condition", "treatment"], as_index=False)["sample"].nunique()
     left.plotly_chart(
@@ -418,6 +360,8 @@ with overview_tab:
         .nunique()
         .rename(columns={"sample": "sample_count"})
     )
+    st.divider()
+    st.subheader("Primary response question")
     left, right = st.columns([1, 2])
     left.plotly_chart(
         style_figure(
@@ -453,6 +397,7 @@ with overview_tab:
 
     day14 = day14_change_summary(change_summary)
     if not day14.empty:
+        st.divider()
         st.subheader("Does anything emerge after treatment starts?")
         day14_fig = px.bar(
             day14.sort_values("change_from_baseline"),
@@ -469,16 +414,11 @@ with overview_tab:
             },
             color_discrete_map=RESPONSE_COLORS,
         )
-        day14_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=MID_GRAY)
+        day14_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=GRAY)
         st.plotly_chart(style_figure(day14_fig), width="stretch")
-        st.markdown(
-            """
-            <div class="section-note">
-            This is the most useful longitudinal summary: it asks whether responders and non-responders move differently after treatment begins.
-            The current pattern still looks modest, which supports the conclusion that richer biological signals would be needed for a stronger response model.
-            </div>
-            """,
-            unsafe_allow_html=True,
+        st.info(
+            "This is the most useful longitudinal summary: it asks whether responders and non-responders move differently after treatment begins. "
+            "The current pattern still looks modest, which supports the conclusion that richer biological signals would be needed for a stronger response model."
         )
 
     with st.expander("Audit preview: sample metadata"):
@@ -718,8 +658,8 @@ with response_tab:
                     "population": "Cell population",
                 },
                 color_discrete_map={
-                    "Higher in responders": ACCENT,
-                    "Higher in non-responders": CHARCOAL,
+                    "Higher in responders": BLUE,
+                    "Higher in non-responders": ORANGE,
                 },
                 hover_data={
                     "responder_median_pct": ":.3f",
@@ -728,7 +668,7 @@ with response_tab:
                     "significance": True,
                 },
             )
-            signal_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=MID_GRAY)
+            signal_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=GRAY)
             st.plotly_chart(style_figure(signal_fig), width="stretch")
             st.dataframe(
                 signal_summary[
@@ -764,8 +704,8 @@ with response_tab:
                     "population": "Cell population",
                 },
                 color_discrete_map={
-                    "Higher in responders": ACCENT,
-                    "Higher in non-responders": CHARCOAL,
+                    "Higher in responders": BLUE,
+                    "Higher in non-responders": ORANGE,
                 },
                 hover_data={
                     "median_difference_pct": ":.3f",
@@ -773,7 +713,7 @@ with response_tab:
                     "direction": True,
                 },
             )
-            effect_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=MID_GRAY)
+            effect_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=GRAY)
             effect_fig.update_layout(
                 title=f"Miraclib melanoma PBMC: effect size direction ({analysis_scope})"
             )
@@ -804,7 +744,7 @@ with response_tab:
                 y=threshold,
                 line_width=1,
                 line_dash="dash",
-                line_color=ACCENT_DARK,
+                line_color=RED,
                 annotation_text="FDR 0.05 threshold",
             )
             st.plotly_chart(style_figure(sig_fig), width="stretch")
@@ -878,7 +818,7 @@ with response_tab:
             color_discrete_map=RESPONSE_COLORS,
         )
         delta_fig.update_yaxes(matches=None)
-        delta_fig.add_hline(y=0, line_width=1, line_dash="dash", line_color=MID_GRAY)
+        delta_fig.add_hline(y=0, line_width=1, line_dash="dash", line_color=GRAY)
         st.plotly_chart(style_figure(delta_fig), width="stretch")
         st.info(
             "Why this matters: absolute frequencies can look flat even when treatment changes a population relative to its own baseline. "
@@ -900,7 +840,7 @@ with response_tab:
             orientation="h",
             title="Which baseline features mattered most to the exploratory model?",
             labels={"absolute_importance": "Absolute standardized coefficient"},
-            color_discrete_sequence=[ACCENT],
+            color_discrete_sequence=[BLUE],
         )
         right.plotly_chart(style_figure(importance_fig), width="stretch")
         st.caption(
@@ -931,7 +871,7 @@ with query_tab:
                 y="sample_count",
                 title="How many baseline samples from each project?",
                 labels={"sample_count": "Samples", "project": "Project"},
-                color_discrete_sequence=[ACCENT],
+                color_discrete_sequence=[BLUE],
             )
         ),
         width="stretch",
@@ -960,7 +900,7 @@ with query_tab:
                 y="subject_count",
                 title="How many male/female subjects?",
                 labels={"subject_count": "Subjects", "sex": "Sex"},
-                color_discrete_sequence=[CHARCOAL],
+                color_discrete_sequence=[GRAY],
             )
         ),
         width="stretch",
