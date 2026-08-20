@@ -368,22 +368,23 @@ with overview_tab:
         width="stretch",
     )
     with right:
-        st.subheader("What the current result means")
-        st.write(
-            "The current five-population frequency panel does not show a strong baseline separation "
-            "between miraclib responders and non-responders. That does not prove there is no biology; "
-            "it means this dataset may be too coarse to expose it alone."
-        )
-        st.markdown(
-            """
-            Recommended next investigations:
+        with st.container(border=True):
+            st.subheader("What the current result means")
+            st.write(
+                "The current five-population frequency panel does not show a strong baseline separation "
+                "between miraclib responders and non-responders. That does not prove there is no biology; "
+                "it means this dataset may be too coarse to expose it alone."
+            )
+            st.markdown(
+                """
+                Recommended next investigations:
 
-            - Add richer biomarkers such as cytokines, gene expression, flow markers, tumor mutational burden, or clinical covariates.
-            - Model longitudinal change from baseline instead of only absolute frequencies at a single timepoint.
-            - Check whether signals emerge in specific subgroups, projects, ages, sex groups, or sample types.
-            - Use subject-level longitudinal models if repeated timepoints become central to the analysis.
-            """
-        )
+                - Add richer biomarkers such as cytokines, gene expression, flow markers, tumor mutational burden, or clinical covariates.
+                - Model longitudinal change from baseline instead of only absolute frequencies at a single timepoint.
+                - Check whether signals emerge in specific subgroups, projects, ages, sex groups, or sample types.
+                - Use subject-level longitudinal models if repeated timepoints become central to the analysis.
+                """
+            )
 
     day14 = day14_change_summary(change_summary)
     if not day14.empty:
