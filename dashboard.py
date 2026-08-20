@@ -22,28 +22,28 @@ st.set_page_config(page_title="Teiko Immune Cell Analytics", layout="wide")
 
 RESPONSE_LABELS = {"yes": "Responder", "no": "Non-responder"}
 
-INK = "#17212B"
-MUTED = "#5F6B7A"
-PANEL = "#F7F9FB"
-BORDER = "#D8DEE6"
-GRID = "#E7ECF2"
-TEAL = "#2A7F7F"
-RUST = "#B65B3A"
-STEEL = "#496B8A"
-GOLD = "#B88A2A"
-SAGE = "#6C8F5E"
-SLATE = "#667085"
-POPULATION_COLORS = [TEAL, GOLD, SAGE, STEEL, RUST]
-RESPONSE_COLORS = {"Responder": TEAL, "Non-responder": RUST}
-SAMPLE_TYPE_COLORS = {"PBMC": STEEL, "WB": GOLD}
-EVIDENCE_COLORS = {"FDR significant": TEAL, "Not significant": "#A8B0BA"}
-TREATMENT_COLORS = {"miraclib": TEAL, "phauximab": GOLD}
+INK = "#111827"
+MUTED = "#6B7280"
+PANEL = "#F8FAFC"
+BORDER = "#E5E7EB"
+GRID = "#F1F5F9"
+ACCENT = "#2563EB"
+ACCENT_DARK = "#1E40AF"
+CHARCOAL = "#374151"
+MID_GRAY = "#9CA3AF"
+LIGHT_GRAY = "#CBD5E1"
+SOFT_BLUE = "#93C5FD"
+POPULATION_COLORS = [ACCENT, INK, CHARCOAL, MID_GRAY, SOFT_BLUE]
+RESPONSE_COLORS = {"Responder": ACCENT, "Non-responder": INK}
+SAMPLE_TYPE_COLORS = {"PBMC": ACCENT, "WB": MID_GRAY}
+EVIDENCE_COLORS = {"FDR significant": ACCENT, "Not significant": LIGHT_GRAY}
+TREATMENT_COLORS = {"miraclib": ACCENT, "phauximab": MID_GRAY}
 
 st.markdown(
     """
     <style>
     html, body, [class*="css"] {
-        color: #17212B;
+        color: #111827;
     }
     .block-container {
         padding-top: 1.5rem;
@@ -52,42 +52,42 @@ st.markdown(
     }
     h1 {
         letter-spacing: 0;
-        color: #17212B;
+        color: #111827;
         padding-bottom: 0.1rem;
     }
     h2, h3 {
-        color: #17212B;
+        color: #111827;
         letter-spacing: 0;
     }
     .stTabs [data-baseweb="tab-list"] {
         gap: 0.35rem;
-        border-bottom: 1px solid #D8DEE6;
+        border-bottom: 1px solid #E5E7EB;
     }
     .stTabs [data-baseweb="tab"] {
         height: 2.6rem;
-        color: #5F6B7A;
+        color: #6B7280;
         border-radius: 6px 6px 0 0;
     }
     .stTabs [aria-selected="true"] {
-        color: #17212B;
-        background: #F7F9FB;
-        border: 1px solid #D8DEE6;
-        border-bottom: 1px solid #F7F9FB;
+        color: #111827;
+        background: #F8FAFC;
+        border: 1px solid #E5E7EB;
+        border-bottom: 1px solid #F8FAFC;
     }
     div[data-testid="stMetric"] {
-        background: #F7F9FB;
-        border: 1px solid #D8DEE6;
+        background: #FFFFFF;
+        border: 1px solid #E5E7EB;
         border-radius: 8px;
         padding: 0.85rem 1rem;
         box-shadow: none;
     }
     div[data-testid="stMetricLabel"] {
-        color: #5F6B7A;
+        color: #6B7280;
         font-weight: 600;
     }
     .insight-card {
-        border: 1px solid #D8DEE6;
-        border-top: 4px solid #2A7F7F;
+        border: 1px solid #E5E7EB;
+        border-top: 3px solid #2563EB;
         border-radius: 8px;
         padding: 1rem 1.1rem;
         background: #FFFFFF;
@@ -96,19 +96,19 @@ st.markdown(
     .insight-card h3 {
         font-size: 1.02rem;
         margin: 0 0 0.45rem 0;
-        color: #17212B;
+        color: #111827;
     }
     .insight-card p {
         margin: 0;
-        color: #3F4A57;
+        color: #374151;
         line-height: 1.45;
     }
     .section-note {
-        border-left: 4px solid #2A7F7F;
+        border-left: 3px solid #2563EB;
         padding: 0.65rem 0.9rem;
-        background: #F7F9FB;
+        background: #F8FAFC;
         border-radius: 6px;
-        color: #3F4A57;
+        color: #374151;
     }
     div[data-testid="stAlert"] {
         border-radius: 8px;
@@ -469,7 +469,7 @@ with overview_tab:
             },
             color_discrete_map=RESPONSE_COLORS,
         )
-        day14_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=SLATE)
+        day14_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=MID_GRAY)
         st.plotly_chart(style_figure(day14_fig), width="stretch")
         st.markdown(
             """
@@ -718,8 +718,8 @@ with response_tab:
                     "population": "Cell population",
                 },
                 color_discrete_map={
-                    "Higher in responders": TEAL,
-                    "Higher in non-responders": RUST,
+                    "Higher in responders": ACCENT,
+                    "Higher in non-responders": CHARCOAL,
                 },
                 hover_data={
                     "responder_median_pct": ":.3f",
@@ -728,7 +728,7 @@ with response_tab:
                     "significance": True,
                 },
             )
-            signal_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=SLATE)
+            signal_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=MID_GRAY)
             st.plotly_chart(style_figure(signal_fig), width="stretch")
             st.dataframe(
                 signal_summary[
@@ -764,8 +764,8 @@ with response_tab:
                     "population": "Cell population",
                 },
                 color_discrete_map={
-                    "Higher in responders": TEAL,
-                    "Higher in non-responders": RUST,
+                    "Higher in responders": ACCENT,
+                    "Higher in non-responders": CHARCOAL,
                 },
                 hover_data={
                     "median_difference_pct": ":.3f",
@@ -773,7 +773,7 @@ with response_tab:
                     "direction": True,
                 },
             )
-            effect_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=SLATE)
+            effect_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=MID_GRAY)
             effect_fig.update_layout(
                 title=f"Miraclib melanoma PBMC: effect size direction ({analysis_scope})"
             )
@@ -804,7 +804,7 @@ with response_tab:
                 y=threshold,
                 line_width=1,
                 line_dash="dash",
-                line_color=RUST,
+                line_color=ACCENT_DARK,
                 annotation_text="FDR 0.05 threshold",
             )
             st.plotly_chart(style_figure(sig_fig), width="stretch")
@@ -878,7 +878,7 @@ with response_tab:
             color_discrete_map=RESPONSE_COLORS,
         )
         delta_fig.update_yaxes(matches=None)
-        delta_fig.add_hline(y=0, line_width=1, line_dash="dash", line_color=SLATE)
+        delta_fig.add_hline(y=0, line_width=1, line_dash="dash", line_color=MID_GRAY)
         st.plotly_chart(style_figure(delta_fig), width="stretch")
         st.info(
             "Why this matters: absolute frequencies can look flat even when treatment changes a population relative to its own baseline. "
@@ -900,7 +900,7 @@ with response_tab:
             orientation="h",
             title="Which baseline features mattered most to the exploratory model?",
             labels={"absolute_importance": "Absolute standardized coefficient"},
-            color_discrete_sequence=[STEEL],
+            color_discrete_sequence=[ACCENT],
         )
         right.plotly_chart(style_figure(importance_fig), width="stretch")
         st.caption(
@@ -931,7 +931,7 @@ with query_tab:
                 y="sample_count",
                 title="How many baseline samples from each project?",
                 labels={"sample_count": "Samples", "project": "Project"},
-                color_discrete_sequence=[STEEL],
+                color_discrete_sequence=[ACCENT],
             )
         ),
         width="stretch",
@@ -960,7 +960,7 @@ with query_tab:
                 y="subject_count",
                 title="How many male/female subjects?",
                 labels={"subject_count": "Subjects", "sex": "Sex"},
-                color_discrete_sequence=[SAGE],
+                color_discrete_sequence=[CHARCOAL],
             )
         ),
         width="stretch",
