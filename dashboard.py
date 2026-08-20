@@ -82,6 +82,16 @@ def scoped_stats(stats: pd.DataFrame, analysis: str) -> pd.DataFrame:
     return out
 
 
+def scoped_signal_summary(summary: pd.DataFrame, analysis: str) -> pd.DataFrame:
+    if summary.empty:
+        return pd.DataFrame()
+    out = summary[summary["analysis"] == analysis].copy()
+    out["significance"] = out["significant_fdr_0_05"].map(
+        {True: "FDR significant", False: "Not significant"}
+    )
+    return out.sort_values("effect_size_rank_biserial", key=lambda s: s.abs(), ascending=False)
+
+
 def short_direction(direction: str) -> str:
     if direction == "Higher in responders":
         return "R higher"
@@ -453,6 +463,10 @@ with response_tab:
 
     responder = load_responder_data(baseline_only)
     stats = scoped_stats(load_csv_output("responder_stats.csv"), analysis_key)
+    signal_summary = scoped_signal_summary(
+        load_csv_output("response_signal_summary.csv"), analysis_key
+    )
+    change_summary = with_response_labels(load_csv_output("change_from_baseline_summary.csv"))
     model_summary = load_csv_output("exploratory_prediction_summary.csv")
     model_importance = load_csv_output("exploratory_prediction_importance.csv")
 
@@ -492,6 +506,55 @@ with response_tab:
             significant_count,
             help="Number of populations with Benjamini-Hochberg adjusted p-value below 0.05.",
         )
+
+        if not signal_summary.empty:
+            st.subheader("Response signal summary")
+            st.caption(
+                "Compact readout for Bob/Yah: median responder frequency, median non-responder frequency, difference, effect size, adjusted p-value, and interpretation."
+            )
+            signal_fig = px.bar(
+                signal_summary.sort_values("median_difference_pct"),
+                x="median_difference_pct",
+                y="population",
+                orientation="h",
+                color="interpretation",
+                title=f"Miraclib melanoma PBMC: median responder minus non-responder difference ({analysis_scope})",
+                labels={
+                    "median_difference_pct": "Median difference (percentage points)",
+                    "population": "Cell population",
+                },
+                color_discrete_map={
+                    "Higher in responders": "#2B8CBE",
+                    "Higher in non-responders": "#F03B20",
+                },
+                hover_data={
+                    "responder_median_pct": ":.3f",
+                    "non_responder_median_pct": ":.3f",
+                    "adjusted_p_value": ":.4f",
+                    "significance": True,
+                },
+            )
+            signal_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color="gray")
+            st.plotly_chart(style_figure(signal_fig), width="stretch")
+            st.dataframe(
+                signal_summary[
+                    [
+                        "population",
+                        "responder_median_pct",
+                        "non_responder_median_pct",
+                        "median_difference_pct",
+                        "effect_size_rank_biserial",
+                        "adjusted_p_value",
+                        "significance",
+                        "interpretation",
+                    ]
+                ],
+                width="stretch",
+                hide_index=True,
+            )
+            st.info(
+                "This table is the most compact answer to Part 3. It shows the direction and strength of each candidate signal, while preserving the statistical caution that none are FDR significant in the current dataset."
+            )
 
         evidence = stats.sort_values("effect_size_rank_biserial")
         effect_fig = px.bar(
@@ -604,7 +667,9 @@ with response_tab:
             "It helps reveal whether a signal appears after treatment starts, even if the baseline-only comparison is weak."
         )
 
-        delta = median_change_from_baseline(responder)
+        delta = change_summary if not change_summary.empty else median_change_from_baseline(responder)
+        if "change_from_baseline_pct_points" in delta.columns:
+            delta = delta.rename(columns={"change_from_baseline_pct_points": "change_from_baseline"})
         delta_fig = px.line(
             delta,
             x="time_from_treatment_start",

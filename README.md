@@ -113,7 +113,7 @@ The dashboard is organized for a project review rather than raw data inspection:
 
 - `Overview`: trial composition, sample-type coverage, baseline cohort balance, the main statistical readout, recommended next investigations, and an audit preview.
 - `Part 2: Cell Frequencies`: filterable relative-frequency trends, an explicit comparison control for treatment/condition/sample type/response, live cohort-specific interpretation, and composition charts, with the exact required output table available for audit.
-- `Part 3: Miraclib Response`: baseline and all-timepoint responder comparisons with plain-language labels, explicit melanoma + miraclib + PBMC scope labels, effect-size direction, statistical evidence, distribution plots, change-from-baseline trends, explanatory chart notes, and exploratory prediction context.
+- `Part 3: Miraclib Response`: baseline and all-timepoint responder comparisons with plain-language labels, explicit melanoma + miraclib + PBMC scope labels, response signal summaries, effect-size direction, statistical evidence, distribution plots, change-from-baseline trends, explanatory chart notes, and exploratory prediction context.
 - `Part 4: Required Queries`: visual answers to the baseline melanoma PBMC miraclib subset questions, with audit tables available on demand.
 
 Raw tables are kept in expandable audit sections so the first view emphasizes insight while still preserving traceability.
