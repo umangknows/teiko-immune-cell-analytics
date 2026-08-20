@@ -128,8 +128,8 @@ def change_from_baseline_summary(freq: pd.DataFrame) -> pd.DataFrame:
     return out.rename(columns={"percentage": "median_pct"})
 
 
-def baseline_subset_summary(db_path=DB_FILE) -> dict[str, pd.DataFrame]:
-    samples = read_sql(
+def baseline_melanoma_pbmc_miraclib_samples(db_path=DB_FILE) -> pd.DataFrame:
+    return read_sql(
         """
         SELECT DISTINCT project, subject, response, sex, sample
         FROM sample_metadata
@@ -137,10 +137,16 @@ def baseline_subset_summary(db_path=DB_FILE) -> dict[str, pd.DataFrame]:
           AND treatment = 'miraclib'
           AND sample_type = 'PBMC'
           AND time_from_treatment_start = 0
+        ORDER BY project, subject, sample
         """,
         db_path,
     )
+
+
+def baseline_subset_summary(db_path=DB_FILE) -> dict[str, pd.DataFrame]:
+    samples = baseline_melanoma_pbmc_miraclib_samples(db_path)
     return {
+        "baseline_melanoma_pbmc_miraclib_samples": samples,
         "samples_by_project": samples.groupby("project", as_index=False)["sample"]
         .nunique()
         .rename(columns={"sample": "sample_count"}),

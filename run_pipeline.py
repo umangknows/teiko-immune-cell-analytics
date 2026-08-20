@@ -64,9 +64,16 @@ def main() -> None:
     )
 
     subset = baseline_subset_summary()
+    excel_sheet_names = {
+        "baseline_melanoma_pbmc_miraclib_samples": "baseline_samples",
+    }
     with pd.ExcelWriter(OUTPUT_DIR / "baseline_subset_summary.xlsx") as writer:
         for sheet_name, data in subset.items():
-            data.to_excel(writer, sheet_name=sheet_name, index=False)
+            data.to_excel(
+                writer,
+                sheet_name=excel_sheet_names.get(sheet_name, sheet_name),
+                index=False,
+            )
             data.to_csv(OUTPUT_DIR / f"{sheet_name}.csv", index=False)
 
     avg_b = melanoma_male_responder_bcell_average()

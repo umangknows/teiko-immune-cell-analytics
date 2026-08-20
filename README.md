@@ -33,6 +33,7 @@ Expected sanity checks after `make pipeline`:
 
 - `teiko.db` exists in the repository root.
 - `outputs/frequency_summary.csv` has 52,500 rows and the exact columns `sample`, `total_count`, `population`, `count`, `percentage`.
+- `outputs/baseline_melanoma_pbmc_miraclib_samples.csv` lists the identified baseline melanoma PBMC samples treated with miraclib.
 - `outputs/melanoma_male_bcell_answer.txt` contains `10206.15`.
 - `outputs/responder_stats.csv` reports responder/non-responder statistics for all five populations.
 
@@ -48,6 +49,7 @@ Expected sanity checks after `make pipeline`:
 | Responder vs non-responder boxplots | `outputs/responder_boxplot_baseline.png`, `outputs/responder_boxplot_all_timepoints.png`, dashboard Part 3 |
 | Significant populations reported with statistics | `outputs/responder_stats.csv`, `outputs/analysis_notes.md` |
 | Response signal summary and longitudinal follow-up | `outputs/response_signal_summary.csv`, `outputs/change_from_baseline_summary.csv` |
+| Part 4 identified baseline sample list | `outputs/baseline_melanoma_pbmc_miraclib_samples.csv`, dashboard Part 4 |
 | Part 4 baseline subset summaries | `outputs/samples_by_project.csv`, `outputs/subjects_by_response.csv`, `outputs/subjects_by_sex.csv` |
 | Average B-cell answer with two decimals | `outputs/melanoma_male_bcell_answer.txt` |
 | `make setup` installs dependencies | `Makefile` |
@@ -71,6 +73,7 @@ Expected sanity checks after `make pipeline`:
 - `outputs/analysis_notes.md`
 - `outputs/responder_boxplot_baseline.png`
 - `outputs/responder_boxplot_all_timepoints.png`
+- `outputs/baseline_melanoma_pbmc_miraclib_samples.csv`
 - `outputs/baseline_subset_summary.xlsx`
 - `outputs/melanoma_male_bcell_answer.txt`
 
@@ -94,7 +97,7 @@ Part 3 has two layers. The primary inferential comparison uses baseline melanoma
 
 For each population, the pipeline reports responder/non-responder medians, median differences, Mann-Whitney U p-values, Benjamini-Hochberg adjusted p-values, and rank-biserial effect sizes. It also trains a small exploratory logistic-regression model on baseline relative frequencies to provide a candidate predictive signal, reported with cross-validated AUC and coefficient importance. This is intentionally framed as exploratory, not clinically validated.
 
-Part 4 writes baseline subset counts by project, response, and sex, plus the requested average B-cell count for melanoma male responders at time 0 rounded to two decimals.
+Part 4 writes the full list of identified baseline melanoma PBMC samples treated with miraclib, baseline subset counts by project, response, and sex, plus the requested average B-cell count for melanoma male responders at time 0 rounded to two decimals.
 
 ## Interpretation
 

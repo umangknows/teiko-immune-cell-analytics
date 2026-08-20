@@ -111,6 +111,22 @@ def test_baseline_subset_summary_uses_miraclib_pbmc_baseline_only():
     db_path = build_test_db()
     subset = baseline_subset_summary(db_path)
 
+    assert subset["baseline_melanoma_pbmc_miraclib_samples"].to_dict("records") == [
+        {
+            "project": "prj1",
+            "subject": "sbj1",
+            "response": "yes",
+            "sex": "M",
+            "sample": "sample1",
+        },
+        {
+            "project": "prj1",
+            "subject": "sbj2",
+            "response": "no",
+            "sex": "F",
+            "sample": "sample2",
+        },
+    ]
     assert subset["samples_by_project"].to_dict("records") == [
         {"project": "prj1", "sample_count": 2}
     ]

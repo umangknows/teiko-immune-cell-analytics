@@ -909,6 +909,12 @@ with query_tab:
     )
 
     with st.expander("Audit tables: subset query results"):
+        st.write("Identified baseline melanoma PBMC miraclib samples")
+        st.dataframe(
+            subset["baseline_melanoma_pbmc_miraclib_samples"],
+            width="stretch",
+            hide_index=True,
+        )
         left, middle, right = st.columns(3)
         left.dataframe(subset["samples_by_project"], width="stretch", hide_index=True)
         middle.dataframe(
