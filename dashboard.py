@@ -84,8 +84,8 @@ def scoped_stats(stats: pd.DataFrame, analysis: str) -> pd.DataFrame:
 
 def short_direction(direction: str) -> str:
     if direction == "Higher in responders":
-        return "Responders higher"
-    return "Non-responders higher"
+        return "R higher"
+    return "NR higher"
 
 
 def population_order_by_median(df: pd.DataFrame) -> list[str]:
@@ -116,7 +116,8 @@ def frequency_takeaway(filtered: pd.DataFrame, median_by_time: pd.DataFrame) -> 
     largest = max(changes, key=lambda item: abs(item[1]))
     direction = "increased" if largest[1] > 0 else "decreased"
     return (
-        f"In the selected cohort, {dominant} has the highest median relative frequency. "
+        f"In simple terms, median relative frequency is the typical share of a sample made up by a given cell population. "
+        f"In the selected cohort, {dominant} has the highest median relative frequency, meaning it is usually the largest part of the measured immune-cell mix. "
         f"The largest day 0 to day 14 movement is {largest[0]}, which {direction} by "
         f"{abs(largest[1]):.2f} percentage points ({largest[2]:.2f}% to {largest[3]:.2f}%). "
         "Small movements suggest composition is fairly stable under the current filters."
@@ -126,11 +127,11 @@ def frequency_takeaway(filtered: pd.DataFrame, median_by_time: pd.DataFrame) -> 
 def response_scope_note(baseline_only: bool) -> str:
     if baseline_only:
         return (
-            "These statistics use only day 0 samples. Each subject contributes one baseline PBMC sample, "
+            "Scope: melanoma patients receiving miraclib, PBMC samples only, day 0 baseline. Each subject contributes one sample, "
             "so this is the cleanest responder/non-responder comparison."
         )
     return (
-        "These statistics pool day 0, day 7, and day 14 PBMC samples. That makes the view useful for "
+        "Scope: melanoma patients receiving miraclib, PBMC samples only, pooling days 0, 7, and 14. That makes the view useful for "
         "pattern discovery, but the same subject can contribute multiple rows."
     )
 
@@ -284,6 +285,12 @@ with frequency_tab:
         sorted(freq["population"].unique()),
         default=sorted(freq["population"].unique()),
     )
+    compare_by = st.selectbox(
+        "Compare trend by",
+        ["Overall", "Treatment", "Condition", "Sample type", "Response"],
+        index=1,
+        help="Use this when multiple treatments, conditions, sample types, or response groups are selected. Overall collapses selected groups into one median trend.",
+    )
 
     filtered = freq[freq["population"].isin(populations)]
     for column, values in {
@@ -308,26 +315,60 @@ with frequency_tab:
             .median()
             .sort_values(["population", "time_from_treatment_start"])
         )
-        st.plotly_chart(
-            style_figure(
-                px.line(
-                    median_by_time,
-                    x="time_from_treatment_start",
-                    y="percentage",
-                    color="population",
-                    markers=True,
-                    title="How does median immune composition change over treatment time?",
-                    category_orders={"population": population_order},
-                    color_discrete_map=color_map,
-                    labels={
-                        "percentage": "Median relative frequency (%)",
-                        "time_from_treatment_start": "Days from treatment start",
-                    },
-                )
-            ),
-            width="stretch",
-        )
+        compare_columns = {
+            "Treatment": "treatment",
+            "Condition": "condition",
+            "Sample type": "sample_type",
+            "Response": "response_label",
+        }
+        if compare_by == "Overall":
+            trend_fig = px.line(
+                median_by_time,
+                x="time_from_treatment_start",
+                y="percentage",
+                color="population",
+                markers=True,
+                title="How does median immune composition change over treatment time?",
+                category_orders={"population": population_order},
+                color_discrete_map=color_map,
+                labels={
+                    "percentage": "Median relative frequency (%)",
+                    "time_from_treatment_start": "Days from treatment start",
+                },
+            )
+        else:
+            compare_col = compare_columns[compare_by]
+            trend_by_group = (
+                filtered.groupby(
+                    ["population", "time_from_treatment_start", compare_col],
+                    as_index=False,
+                )["percentage"]
+                .median()
+                .sort_values([compare_col, "population", "time_from_treatment_start"])
+            )
+            trend_fig = px.line(
+                trend_by_group,
+                x="time_from_treatment_start",
+                y="percentage",
+                color=compare_col,
+                facet_col="population",
+                facet_col_wrap=3,
+                markers=True,
+                title=f"How does median immune composition change over time by {compare_by.lower()}?",
+                category_orders={"population": population_order},
+                labels={
+                    "percentage": "Median relative frequency (%)",
+                    "time_from_treatment_start": "Days from treatment start",
+                    compare_col: compare_by,
+                },
+            )
+            trend_fig.update_yaxes(matches=None)
+        st.plotly_chart(style_figure(trend_fig), width="stretch")
         st.info(frequency_takeaway(filtered, median_by_time))
+        st.caption(
+            "If multiple groups are selected, use `Compare trend by` to avoid mixing them into one line. "
+            "For example, compare by Treatment to see miraclib and phauximab separately."
+        )
 
         left, right = st.columns(2)
         population_mix = (
@@ -382,7 +423,7 @@ with frequency_tab:
 with response_tab:
     st.subheader("Do miraclib responders differ from non-responders?")
     st.caption(
-        "The required comparison is limited to melanoma patients receiving miraclib, using PBMC samples."
+        "Scope for every chart on this tab: melanoma patients receiving miraclib, PBMC samples only, responders vs non-responders."
     )
 
     analysis_scope = st.radio(
@@ -422,7 +463,7 @@ with response_tab:
         c2.metric(
             "Direction",
             short_direction(best["direction"]),
-            help="Shows which response group has the higher relative frequency for the top candidate.",
+            help="R higher means responder median is higher. NR higher means non-responder median is higher.",
         )
         c3.metric(
             "Median difference",
@@ -458,9 +499,13 @@ with response_tab:
             },
         )
         effect_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color="gray")
+        effect_fig.update_layout(
+            title=f"Miraclib melanoma PBMC: effect size direction ({analysis_scope})"
+        )
         st.plotly_chart(style_figure(effect_fig), width="stretch")
         st.info(
-            "How to read this: bars to the right of zero are higher in responders; bars to the left are higher in non-responders. "
+            "How to read this: this chart is only for melanoma patients treated with miraclib using PBMC samples. "
+            "Bars to the right of zero are higher in responders; bars to the left are higher in non-responders. "
             "Longer bars mean larger separation between groups. In this dataset, the bars are small, so the observed differences are weak."
         )
 
@@ -473,7 +518,7 @@ with response_tab:
             x="population",
             y="minus_log10_adjusted_p",
             color="evidence",
-            title="Statistical evidence after multiple-testing correction",
+            title=f"Miraclib melanoma PBMC: statistical evidence ({analysis_scope})",
             labels={
                 "minus_log10_adjusted_p": "-log10(FDR-adjusted p-value)",
                 "population": "Cell population",
@@ -492,9 +537,9 @@ with response_tab:
         )
         st.plotly_chart(style_figure(sig_fig), width="stretch")
         st.info(
-            "How to read this: the dashed line is the FDR 0.05 threshold after correcting for testing five populations. "
-            "A bar must rise above that line to be called statistically significant. Current bars stay below the threshold, "
-            "so the dashboard reports no significant population-level frequency differences."
+            "How to read this: the y-axis is transformed, not a raw p-value. It shows -log10(FDR-adjusted p-value), "
+            "so stronger evidence appears taller. The dashed line corresponds to adjusted p=0.05 after correcting for five tested populations. "
+            "A bar must rise above that line to be called statistically significant. Current bars stay below the threshold."
         )
 
     box = px.box(
@@ -503,7 +548,7 @@ with response_tab:
         y="percentage",
         color="response_label",
         points=False,
-        title="Responder vs non-responder frequency distributions",
+        title=f"Miraclib melanoma PBMC: responder vs non-responder frequency distributions ({analysis_scope})",
         labels={"percentage": "Relative frequency (%)", "population": "Cell population"},
         color_discrete_map={"Responder": "#2B8CBE", "Non-responder": "#F03B20"},
     )
@@ -528,7 +573,7 @@ with response_tab:
             facet_col="population",
             facet_col_wrap=3,
             markers=True,
-            title="Median frequency over time by response group",
+            title="Miraclib melanoma PBMC: median frequency over time by response group",
             labels={
                 "percentage": "Median relative frequency (%)",
                 "time_from_treatment_start": "Days from treatment start",
