@@ -78,7 +78,6 @@ def main() -> None:
         "",
         f"Exploratory baseline logistic-regression AUC: {model_summary.loc[0, 'cross_validated_auc']:.4f}. This is reported as an exploratory predictive signal only, not a validated clinical model.",
         "",
-        "The task text mentions quintazide, but the dataset contains no quintazide treatment or variable. The analysis therefore uses the treatment values present in cell-count.csv.",
     ]
     (OUTPUT_DIR / "analysis_notes.md").write_text("\n".join(notes) + "\n", encoding="utf-8")
 

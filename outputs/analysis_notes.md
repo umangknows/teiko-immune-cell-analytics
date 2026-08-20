@@ -8,4 +8,3 @@ Significant baseline populations at FDR 0.05: none.
 
 Exploratory baseline logistic-regression AUC: 0.4890. This is reported as an exploratory predictive signal only, not a validated clinical model.
 
-The task text mentions quintazide, but the dataset contains no quintazide treatment or variable. The analysis therefore uses the treatment values present in cell-count.csv.
