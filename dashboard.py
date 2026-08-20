@@ -21,50 +21,97 @@ from teiko.config import DB_FILE, OUTPUT_DIR
 st.set_page_config(page_title="Teiko Immune Cell Analytics", layout="wide")
 
 RESPONSE_LABELS = {"yes": "Responder", "no": "Non-responder"}
-POPULATION_COLORS = ["#E45756", "#F2CF5B", "#54A24B", "#4C78A8", "#72B7B2"]
+
+INK = "#17212B"
+MUTED = "#5F6B7A"
+PANEL = "#F7F9FB"
+BORDER = "#D8DEE6"
+GRID = "#E7ECF2"
+TEAL = "#2A7F7F"
+RUST = "#B65B3A"
+STEEL = "#496B8A"
+GOLD = "#B88A2A"
+SAGE = "#6C8F5E"
+SLATE = "#667085"
+POPULATION_COLORS = [TEAL, GOLD, SAGE, STEEL, RUST]
+RESPONSE_COLORS = {"Responder": TEAL, "Non-responder": RUST}
+SAMPLE_TYPE_COLORS = {"PBMC": STEEL, "WB": GOLD}
+EVIDENCE_COLORS = {"FDR significant": TEAL, "Not significant": "#A8B0BA"}
+TREATMENT_COLORS = {"miraclib": TEAL, "phauximab": GOLD}
 
 st.markdown(
     """
     <style>
+    html, body, [class*="css"] {
+        color: #17212B;
+    }
     .block-container {
-        padding-top: 2rem;
+        padding-top: 1.5rem;
         padding-bottom: 3rem;
         max-width: 1320px;
     }
+    h1 {
+        letter-spacing: 0;
+        color: #17212B;
+        padding-bottom: 0.1rem;
+    }
+    h2, h3 {
+        color: #17212B;
+        letter-spacing: 0;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 0.35rem;
+        border-bottom: 1px solid #D8DEE6;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 2.6rem;
+        color: #5F6B7A;
+        border-radius: 6px 6px 0 0;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #17212B;
+        background: #F7F9FB;
+        border: 1px solid #D8DEE6;
+        border-bottom: 1px solid #F7F9FB;
+    }
     div[data-testid="stMetric"] {
-        background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(241, 245, 249, 0.72));
-        border: 1px solid rgba(148, 163, 184, 0.25);
+        background: #F7F9FB;
+        border: 1px solid #D8DEE6;
         border-radius: 8px;
         padding: 0.85rem 1rem;
+        box-shadow: none;
     }
     div[data-testid="stMetricLabel"] {
-        color: #475569;
+        color: #5F6B7A;
         font-weight: 600;
     }
     .insight-card {
-        border: 1px solid rgba(148, 163, 184, 0.28);
-        border-left: 5px solid #2B8CBE;
+        border: 1px solid #D8DEE6;
+        border-top: 4px solid #2A7F7F;
         border-radius: 8px;
         padding: 1rem 1.1rem;
-        background: rgba(248, 250, 252, 0.86);
+        background: #FFFFFF;
         min-height: 150px;
     }
     .insight-card h3 {
         font-size: 1.02rem;
         margin: 0 0 0.45rem 0;
-        color: #0f172a;
+        color: #17212B;
     }
     .insight-card p {
         margin: 0;
-        color: #334155;
+        color: #3F4A57;
         line-height: 1.45;
     }
     .section-note {
-        border-left: 4px solid #94a3b8;
+        border-left: 4px solid #2A7F7F;
         padding: 0.65rem 0.9rem;
-        background: rgba(241, 245, 249, 0.72);
+        background: #F7F9FB;
         border-radius: 6px;
-        color: #334155;
+        color: #3F4A57;
+    }
+    div[data-testid="stAlert"] {
+        border-radius: 8px;
     }
     </style>
     """,
@@ -110,9 +157,29 @@ def load_csv_output(name: str) -> pd.DataFrame:
 
 def style_figure(fig: go.Figure) -> go.Figure:
     fig.update_layout(
+        template="plotly_white",
         margin=dict(l=10, r=10, t=54, b=28),
         legend_title_text="",
-        font=dict(size=13),
+        font=dict(size=13, color=INK),
+        title=dict(font=dict(size=17, color=INK), x=0.01, xanchor="left"),
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF",
+        colorway=POPULATION_COLORS,
+        hoverlabel=dict(bgcolor="#FFFFFF", font_size=12, font_color=INK, bordercolor=BORDER),
+    )
+    fig.update_xaxes(
+        gridcolor=GRID,
+        zerolinecolor=GRID,
+        linecolor=BORDER,
+        tickfont=dict(color=MUTED),
+        title_font=dict(color=MUTED),
+    )
+    fig.update_yaxes(
+        gridcolor=GRID,
+        zerolinecolor=GRID,
+        linecolor=BORDER,
+        tickfont=dict(color=MUTED),
+        title_font=dict(color=MUTED),
     )
     return fig
 
@@ -316,7 +383,7 @@ with overview_tab:
                 barmode="stack",
                 title="What data do we have?",
                 labels={"sample": "Samples", "condition": "Disease/condition"},
-                color_discrete_sequence=px.colors.qualitative.Set2,
+                color_discrete_map=TREATMENT_COLORS,
             )
         ),
         width="stretch",
@@ -333,7 +400,7 @@ with overview_tab:
                 barmode="group",
                 title="Where are sample types represented?",
                 labels={"sample": "Samples", "project": "Project"},
-                color_discrete_sequence=["#4C78A8", "#F58518"],
+                color_discrete_map=SAMPLE_TYPE_COLORS,
             )
         ),
         width="stretch",
@@ -361,7 +428,7 @@ with overview_tab:
                 color="response_label",
                 title="Primary baseline cohort balance",
                 labels={"sample_count": "Samples", "response_label": "Response"},
-                color_discrete_map={"Responder": "#2B8CBE", "Non-responder": "#F03B20"},
+                color_discrete_map=RESPONSE_COLORS,
             )
         ),
         width="stretch",
@@ -400,9 +467,9 @@ with overview_tab:
                 "population": "Cell population",
                 "response_label": "Response",
             },
-            color_discrete_map={"Responder": "#2B8CBE", "Non-responder": "#F03B20"},
+            color_discrete_map=RESPONSE_COLORS,
         )
-        day14_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color="gray")
+        day14_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=SLATE)
         st.plotly_chart(style_figure(day14_fig), width="stretch")
         st.markdown(
             """
@@ -562,7 +629,7 @@ with frequency_tab:
                     barmode="group",
                     title="Do PBMC and whole-blood samples differ?",
                     labels={"percentage": "Median relative frequency (%)"},
-                    color_discrete_sequence=["#4C78A8", "#F58518"],
+                    color_discrete_map=SAMPLE_TYPE_COLORS,
                 )
             ),
             width="stretch",
@@ -651,8 +718,8 @@ with response_tab:
                     "population": "Cell population",
                 },
                 color_discrete_map={
-                    "Higher in responders": "#2B8CBE",
-                    "Higher in non-responders": "#F03B20",
+                    "Higher in responders": TEAL,
+                    "Higher in non-responders": RUST,
                 },
                 hover_data={
                     "responder_median_pct": ":.3f",
@@ -661,7 +728,7 @@ with response_tab:
                     "significance": True,
                 },
             )
-            signal_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color="gray")
+            signal_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=SLATE)
             st.plotly_chart(style_figure(signal_fig), width="stretch")
             st.dataframe(
                 signal_summary[
@@ -697,8 +764,8 @@ with response_tab:
                     "population": "Cell population",
                 },
                 color_discrete_map={
-                    "Higher in responders": "#2B8CBE",
-                    "Higher in non-responders": "#F03B20",
+                    "Higher in responders": TEAL,
+                    "Higher in non-responders": RUST,
                 },
                 hover_data={
                     "median_difference_pct": ":.3f",
@@ -706,7 +773,7 @@ with response_tab:
                     "direction": True,
                 },
             )
-            effect_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color="gray")
+            effect_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=SLATE)
             effect_fig.update_layout(
                 title=f"Miraclib melanoma PBMC: effect size direction ({analysis_scope})"
             )
@@ -731,16 +798,13 @@ with response_tab:
                     "minus_log10_adjusted_p": "-log10(FDR-adjusted p-value)",
                     "population": "Cell population",
                 },
-                color_discrete_map={
-                    "FDR significant": "#2B8CBE",
-                    "Not significant": "#9AA0A6",
-                },
+                color_discrete_map=EVIDENCE_COLORS,
             )
             sig_fig.add_hline(
                 y=threshold,
                 line_width=1,
                 line_dash="dash",
-                line_color="#D62728",
+                line_color=RUST,
                 annotation_text="FDR 0.05 threshold",
             )
             st.plotly_chart(style_figure(sig_fig), width="stretch")
@@ -758,7 +822,7 @@ with response_tab:
         points=False,
         title=f"Miraclib melanoma PBMC: responder vs non-responder frequency distributions ({analysis_scope})",
         labels={"percentage": "Relative frequency (%)", "population": "Cell population"},
-        color_discrete_map={"Responder": "#2B8CBE", "Non-responder": "#F03B20"},
+        color_discrete_map=RESPONSE_COLORS,
     )
     st.plotly_chart(style_figure(box), width="stretch")
     st.caption(
@@ -786,7 +850,7 @@ with response_tab:
                 "percentage": "Median relative frequency (%)",
                 "time_from_treatment_start": "Days from treatment start",
             },
-            color_discrete_map={"Responder": "#2B8CBE", "Non-responder": "#F03B20"},
+            color_discrete_map=RESPONSE_COLORS,
         )
         trend_fig.update_yaxes(matches=None)
         st.plotly_chart(style_figure(trend_fig), width="stretch")
@@ -811,10 +875,10 @@ with response_tab:
                 "change_from_baseline": "Change from baseline (percentage points)",
                 "time_from_treatment_start": "Days from treatment start",
             },
-            color_discrete_map={"Responder": "#2B8CBE", "Non-responder": "#F03B20"},
+            color_discrete_map=RESPONSE_COLORS,
         )
         delta_fig.update_yaxes(matches=None)
-        delta_fig.add_hline(y=0, line_width=1, line_dash="dash", line_color="gray")
+        delta_fig.add_hline(y=0, line_width=1, line_dash="dash", line_color=SLATE)
         st.plotly_chart(style_figure(delta_fig), width="stretch")
         st.info(
             "Why this matters: absolute frequencies can look flat even when treatment changes a population relative to its own baseline. "
@@ -836,7 +900,7 @@ with response_tab:
             orientation="h",
             title="Which baseline features mattered most to the exploratory model?",
             labels={"absolute_importance": "Absolute standardized coefficient"},
-            color_discrete_sequence=["#4C78A8"],
+            color_discrete_sequence=[STEEL],
         )
         right.plotly_chart(style_figure(importance_fig), width="stretch")
         st.caption(
@@ -867,7 +931,7 @@ with query_tab:
                 y="sample_count",
                 title="How many baseline samples from each project?",
                 labels={"sample_count": "Samples", "project": "Project"},
-                color_discrete_sequence=["#4C78A8"],
+                color_discrete_sequence=[STEEL],
             )
         ),
         width="stretch",
@@ -883,7 +947,7 @@ with query_tab:
                 title="How many subjects responded?",
                 labels={"subject_count": "Subjects", "response_label": "Response"},
                 color="response_label",
-                color_discrete_map={"Responder": "#2B8CBE", "Non-responder": "#F03B20"},
+                color_discrete_map=RESPONSE_COLORS,
             )
         ),
         width="stretch",
@@ -896,7 +960,7 @@ with query_tab:
                 y="subject_count",
                 title="How many male/female subjects?",
                 labels={"subject_count": "Subjects", "sex": "Sex"},
-                color_discrete_sequence=["#72B7B2"],
+                color_discrete_sequence=[SAGE],
             )
         ),
         width="stretch",
