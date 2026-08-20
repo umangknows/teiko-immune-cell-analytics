@@ -166,29 +166,47 @@ with overview_tab:
         & (samples["sample_type"] == "PBMC")
         & (samples["response"].isin(["yes", "no"]))
     ]
+    baseline_focus = focus[focus["time_from_treatment_start"] == 0]
     response_counts = (
-        focus.groupby(["time_from_treatment_start", "response_label"], as_index=False)["sample"]
+        baseline_focus.groupby(["response_label"], as_index=False)["sample"]
         .nunique()
         .rename(columns={"sample": "sample_count"})
     )
-    st.plotly_chart(
+    left, right = st.columns([1, 2])
+    left.plotly_chart(
         style_figure(
             px.bar(
                 response_counts,
-                x="time_from_treatment_start",
+                x="response_label",
                 y="sample_count",
                 color="response_label",
-                barmode="group",
-                title="Required Part 3 cohort: melanoma + miraclib + PBMC",
-                labels={
-                    "sample_count": "Samples",
-                    "time_from_treatment_start": "Days from treatment start",
-                },
+                title="Primary baseline cohort balance",
+                labels={"sample_count": "Samples", "response_label": "Response"},
                 color_discrete_map={"Responder": "#2B8CBE", "Non-responder": "#F03B20"},
             )
         ),
         width="stretch",
     )
+    with right:
+        st.subheader("What the current result means")
+        st.write(
+            "The current five-population frequency panel does not show a strong baseline separation "
+            "between miraclib responders and non-responders. That does not prove there is no biology; "
+            "it means this dataset may be too coarse to expose it alone."
+        )
+        st.markdown(
+            """
+            Recommended next investigations:
+
+            - Add richer biomarkers such as cytokines, gene expression, flow markers, tumor mutational burden, or clinical covariates.
+            - Model longitudinal change from baseline instead of only absolute frequencies at a single timepoint.
+            - Check whether signals emerge in specific subgroups, projects, ages, sex groups, or sample types.
+            - Use subject-level longitudinal models if repeated timepoints become central to the analysis.
+            """
+        )
+
+    with st.expander("Audit preview: sample metadata"):
+        st.dataframe(samples.head(250), width="stretch", hide_index=True)
 
 with frequency_tab:
     st.subheader("Relative frequency of each cell population in each sample")

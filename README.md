@@ -54,11 +54,22 @@ For each population, the pipeline reports responder/non-responder medians, media
 
 Part 4 writes baseline subset counts by project, response, and sex, plus the requested average B-cell count for melanoma male responders at time 0 rounded to two decimals.
 
+## Interpretation
+
+The current five-population frequency panel does not show a strong baseline separation between miraclib responders and non-responders. This should be interpreted as an absence of evidence in the available coarse immune-count features, not proof that no biological response signal exists.
+
+Recommended next investigations:
+
+- Add richer biomarkers such as cytokines, gene expression, additional flow-cytometry markers, tumor mutational burden, or clinical covariates.
+- Analyze change from baseline across timepoints, not only absolute frequencies.
+- Check whether signal appears within subgroups such as project, age, sex, sample type, or disease context.
+- Use subject-level longitudinal models if repeated timepoints become central to inference.
+
 ## Dashboard Design
 
 The dashboard is organized for a project review rather than raw data inspection:
 
-- `Overview`: trial composition, sample-type coverage, the required Part 3 cohort, and the main statistical readout.
+- `Overview`: trial composition, sample-type coverage, baseline cohort balance, the main statistical readout, recommended next investigations, and an audit preview.
 - `Part 2: Cell Frequencies`: filterable relative-frequency trends and cohort composition charts, with the exact required output table available for audit.
 - `Part 3: Miraclib Response`: baseline and all-timepoint responder comparisons with plain-language labels, effect-size direction, statistical evidence, distribution plots, and exploratory prediction context.
 - `Part 4: Required Queries`: visual answers to the baseline melanoma PBMC miraclib subset questions, with audit tables available on demand.
@@ -88,3 +99,5 @@ Deployment configuration:
 - Repository: `umangknows/teiko-immune-cell-analytics`
 - Branch: `main`
 - Entry point: `dashboard.py`
+
+Streamlit Community Cloud is a free hosted service, so an app may go cold or require a fresh reboot after inactivity. If the public dashboard shows a sleeping/rebuild message or does not load immediately, open the app from the Streamlit workspace or click `Manage app`, then use the Streamlit `Reboot` option. Streamlit documents this reboot flow in its Community Cloud docs: `https://docs.streamlit.io/deploy/streamlit-community-cloud/manage-your-app/reboot-your-app`.
