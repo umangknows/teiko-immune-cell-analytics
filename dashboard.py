@@ -22,10 +22,6 @@ st.set_page_config(page_title="Teiko Immune Cell Analytics", layout="wide")
 
 RESPONSE_LABELS = {"yes": "Responder", "no": "Non-responder"}
 
-INK = "#1F2937"
-MUTED = "#6B7280"
-BORDER = "#D1D5DB"
-GRID = "#E5E7EB"
 BLUE = "#1F77B4"
 ORANGE = "#FF7F0E"
 GREEN = "#2CA02C"
@@ -100,29 +96,20 @@ def load_csv_output(name: str) -> pd.DataFrame:
 
 def style_figure(fig: go.Figure) -> go.Figure:
     fig.update_layout(
-        template="plotly_white",
         margin=dict(l=10, r=10, t=54, b=28),
         legend_title_text="",
-        font=dict(size=13, color=INK),
-        title=dict(font=dict(size=17, color=INK), x=0.01, xanchor="left"),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF",
+        font=dict(size=13),
+        title=dict(font=dict(size=17), x=0.01, xanchor="left"),
         colorway=POPULATION_COLORS,
-        hoverlabel=dict(bgcolor="#FFFFFF", font_size=12, font_color=INK, bordercolor=BORDER),
+        hoverlabel=dict(font_size=12),
     )
     fig.update_xaxes(
-        gridcolor=GRID,
-        zerolinecolor=GRID,
-        linecolor=BORDER,
-        tickfont=dict(color=MUTED),
-        title_font=dict(color=MUTED),
+        showgrid=True,
+        zeroline=True,
     )
     fig.update_yaxes(
-        gridcolor=GRID,
-        zerolinecolor=GRID,
-        linecolor=BORDER,
-        tickfont=dict(color=MUTED),
-        title_font=dict(color=MUTED),
+        showgrid=True,
+        zeroline=True,
     )
     return fig
 
@@ -328,6 +315,7 @@ with overview_tab:
                 color_discrete_map=TREATMENT_COLORS,
             )
         ),
+        theme="streamlit",
         width="stretch",
     )
 
@@ -345,6 +333,7 @@ with overview_tab:
                 color_discrete_map=SAMPLE_TYPE_COLORS,
             )
         ),
+        theme="streamlit",
         width="stretch",
     )
 
@@ -375,6 +364,7 @@ with overview_tab:
                 color_discrete_map=RESPONSE_COLORS,
             )
         ),
+        theme="streamlit",
         width="stretch",
     )
     with right:
@@ -415,7 +405,7 @@ with overview_tab:
             color_discrete_map=RESPONSE_COLORS,
         )
         day14_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=GRAY)
-        st.plotly_chart(style_figure(day14_fig), width="stretch")
+        st.plotly_chart(style_figure(day14_fig), theme="streamlit", width="stretch")
         st.info(
             "This is the most useful longitudinal summary: it asks whether responders and non-responders move differently after treatment begins. "
             "The current pattern still looks modest, which supports the conclusion that richer biological signals would be needed for a stronger response model."
@@ -524,7 +514,7 @@ with frequency_tab:
                 },
             )
             trend_fig.update_yaxes(matches=None)
-        st.plotly_chart(style_figure(trend_fig), width="stretch")
+        st.plotly_chart(style_figure(trend_fig), theme="streamlit", width="stretch")
         st.info(frequency_takeaway(filtered, median_by_time))
         st.caption(
             "If multiple groups are selected, use `Compare trend by` to avoid mixing them into one line. "
@@ -550,6 +540,7 @@ with frequency_tab:
                     color_discrete_map=color_map,
                 )
             ),
+            theme="streamlit",
             width="stretch",
         )
         left.caption(
@@ -572,6 +563,7 @@ with frequency_tab:
                     color_discrete_map=SAMPLE_TYPE_COLORS,
                 )
             ),
+            theme="streamlit",
             width="stretch",
         )
         right.caption(
@@ -669,7 +661,7 @@ with response_tab:
                 },
             )
             signal_fig.add_vline(x=0, line_width=1, line_dash="dash", line_color=GRAY)
-            st.plotly_chart(style_figure(signal_fig), width="stretch")
+            st.plotly_chart(style_figure(signal_fig), theme="streamlit", width="stretch")
             st.dataframe(
                 signal_summary[
                     [
@@ -717,7 +709,7 @@ with response_tab:
             effect_fig.update_layout(
                 title=f"Miraclib melanoma PBMC: effect size direction ({analysis_scope})"
             )
-            st.plotly_chart(style_figure(effect_fig), width="stretch")
+            st.plotly_chart(style_figure(effect_fig), theme="streamlit", width="stretch")
             st.info(
                 "How to read this: this chart is only for melanoma patients treated with miraclib using PBMC samples. "
                 "Bars to the right of zero are higher in responders; bars to the left are higher in non-responders. "
@@ -747,7 +739,7 @@ with response_tab:
                 line_color=RED,
                 annotation_text="FDR 0.05 threshold",
             )
-            st.plotly_chart(style_figure(sig_fig), width="stretch")
+            st.plotly_chart(style_figure(sig_fig), theme="streamlit", width="stretch")
             st.info(
                 "How to read this: the y-axis is transformed, not a raw p-value. It shows -log10(FDR-adjusted p-value), "
                 "so stronger evidence appears taller. The dashed line corresponds to adjusted p=0.05 after correcting for five tested populations. "
@@ -764,7 +756,7 @@ with response_tab:
         labels={"percentage": "Relative frequency (%)", "population": "Cell population"},
         color_discrete_map=RESPONSE_COLORS,
     )
-    st.plotly_chart(style_figure(box), width="stretch")
+    st.plotly_chart(style_figure(box), theme="streamlit", width="stretch")
     st.caption(
         "Each box summarizes the distribution of relative frequencies for one population. Clear vertical separation between responder and non-responder boxes would suggest a stronger response-associated signal."
     )
@@ -793,7 +785,7 @@ with response_tab:
             color_discrete_map=RESPONSE_COLORS,
         )
         trend_fig.update_yaxes(matches=None)
-        st.plotly_chart(style_figure(trend_fig), width="stretch")
+        st.plotly_chart(style_figure(trend_fig), theme="streamlit", width="stretch")
         st.info(
             "This view shows median relative frequency over days 0, 7, and 14 separately for responders and non-responders. "
             "It helps reveal whether a signal appears after treatment starts, even if the baseline-only comparison is weak."
@@ -819,7 +811,7 @@ with response_tab:
         )
         delta_fig.update_yaxes(matches=None)
         delta_fig.add_hline(y=0, line_width=1, line_dash="dash", line_color=GRAY)
-        st.plotly_chart(style_figure(delta_fig), width="stretch")
+        st.plotly_chart(style_figure(delta_fig), theme="streamlit", width="stretch")
         st.info(
             "Why this matters: absolute frequencies can look flat even when treatment changes a population relative to its own baseline. "
             "This chart resets each response group to zero at day 0, then shows whether responders and non-responders drift differently after treatment starts."
@@ -842,7 +834,7 @@ with response_tab:
             labels={"absolute_importance": "Absolute standardized coefficient"},
             color_discrete_sequence=[BLUE],
         )
-        right.plotly_chart(style_figure(importance_fig), width="stretch")
+        right.plotly_chart(style_figure(importance_fig), theme="streamlit", width="stretch")
         st.caption(
             "These coefficients show which baseline populations the exploratory logistic model leaned on most. The AUC near 0.50 says that leaning did not translate into useful predictive performance."
         )
@@ -874,6 +866,7 @@ with query_tab:
                 color_discrete_sequence=[BLUE],
             )
         ),
+        theme="streamlit",
         width="stretch",
     )
     c2.plotly_chart(
@@ -890,6 +883,7 @@ with query_tab:
                 color_discrete_map=RESPONSE_COLORS,
             )
         ),
+        theme="streamlit",
         width="stretch",
     )
     c3.plotly_chart(
@@ -903,6 +897,7 @@ with query_tab:
                 color_discrete_sequence=[GRAY],
             )
         ),
+        theme="streamlit",
         width="stretch",
     )
 
