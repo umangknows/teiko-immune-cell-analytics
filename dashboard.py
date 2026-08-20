@@ -136,6 +136,23 @@ def response_scope_note(baseline_only: bool) -> str:
     )
 
 
+def median_change_from_baseline(responder: pd.DataFrame) -> pd.DataFrame:
+    medians = (
+        responder.groupby(
+            ["time_from_treatment_start", "population", "response_label"],
+            as_index=False,
+        )["percentage"]
+        .median()
+        .sort_values(["population", "response_label", "time_from_treatment_start"])
+    )
+    baseline = medians[medians["time_from_treatment_start"] == 0][
+        ["population", "response_label", "percentage"]
+    ].rename(columns={"percentage": "baseline_percentage"})
+    out = medians.merge(baseline, on=["population", "response_label"], how="left")
+    out["change_from_baseline"] = out["percentage"] - out["baseline_percentage"]
+    return out
+
+
 st.title("Teiko Immune Cell Analytics")
 st.caption(
     "A reproducible clinical-trial data pipeline and dashboard for immune cell population analysis."
@@ -585,6 +602,30 @@ with response_tab:
         st.info(
             "This view shows median relative frequency over days 0, 7, and 14 separately for responders and non-responders. "
             "It helps reveal whether a signal appears after treatment starts, even if the baseline-only comparison is weak."
+        )
+
+        delta = median_change_from_baseline(responder)
+        delta_fig = px.line(
+            delta,
+            x="time_from_treatment_start",
+            y="change_from_baseline",
+            color="response_label",
+            facet_col="population",
+            facet_col_wrap=3,
+            markers=True,
+            title="Miraclib melanoma PBMC: median change from day 0 baseline",
+            labels={
+                "change_from_baseline": "Change from baseline (percentage points)",
+                "time_from_treatment_start": "Days from treatment start",
+            },
+            color_discrete_map={"Responder": "#2B8CBE", "Non-responder": "#F03B20"},
+        )
+        delta_fig.update_yaxes(matches=None)
+        delta_fig.add_hline(y=0, line_width=1, line_dash="dash", line_color="gray")
+        st.plotly_chart(style_figure(delta_fig), width="stretch")
+        st.info(
+            "Why this matters: absolute frequencies can look flat even when treatment changes a population relative to its own baseline. "
+            "This chart resets each response group to zero at day 0, then shows whether responders and non-responders drift differently after treatment starts."
         )
 
     if baseline_only and not model_summary.empty:

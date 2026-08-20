@@ -16,6 +16,25 @@ make dashboard
 
 The local dashboard runs at `http://localhost:8501`. The public Streamlit dashboard is available at `https://teiko-immune-cell-analytics.streamlit.app/`.
 
+## Assignment Checklist
+
+| Requirement | Where implemented |
+| --- | --- |
+| Root-level `load_data.py` initializes SQLite and loads all CSV rows | `load_data.py` |
+| Running `python load_data.py` creates a root-level `.db` file | `teiko.db` |
+| Relational SQLite schema | `teiko/schema.py` |
+| Part 2 frequency table with exact required columns | `outputs/frequency_summary.csv` |
+| Part 3 melanoma + miraclib + PBMC responder analysis | `outputs/responder_stats.csv`, dashboard Part 3 |
+| Responder vs non-responder boxplots | `outputs/responder_boxplot_baseline.png`, `outputs/responder_boxplot_all_timepoints.png`, dashboard Part 3 |
+| Significant populations reported with statistics | `outputs/responder_stats.csv`, `outputs/analysis_notes.md` |
+| Part 4 baseline subset summaries | `outputs/samples_by_project.csv`, `outputs/subjects_by_response.csv`, `outputs/subjects_by_sex.csv` |
+| Average B-cell answer with two decimals | `outputs/melanoma_male_bcell_answer.txt` |
+| `make setup` installs dependencies | `Makefile` |
+| `make pipeline` runs full data pipeline | `Makefile` |
+| `make dashboard` starts dashboard server | `Makefile` |
+| Dashboard link included | `https://teiko-immune-cell-analytics.streamlit.app/` |
+| CI verifies setup, pipeline, tests, and dashboard syntax | `.github/workflows/ci.yml` |
+
 ## Outputs
 
 `make pipeline` creates:
@@ -71,7 +90,7 @@ The dashboard is organized for a project review rather than raw data inspection:
 
 - `Overview`: trial composition, sample-type coverage, baseline cohort balance, the main statistical readout, recommended next investigations, and an audit preview.
 - `Part 2: Cell Frequencies`: filterable relative-frequency trends, an explicit comparison control for treatment/condition/sample type/response, live cohort-specific interpretation, and composition charts, with the exact required output table available for audit.
-- `Part 3: Miraclib Response`: baseline and all-timepoint responder comparisons with plain-language labels, explicit melanoma + miraclib + PBMC scope labels, effect-size direction, statistical evidence, distribution plots, explanatory chart notes, and exploratory prediction context.
+- `Part 3: Miraclib Response`: baseline and all-timepoint responder comparisons with plain-language labels, explicit melanoma + miraclib + PBMC scope labels, effect-size direction, statistical evidence, distribution plots, change-from-baseline trends, explanatory chart notes, and exploratory prediction context.
 - `Part 4: Required Queries`: visual answers to the baseline melanoma PBMC miraclib subset questions, with audit tables available on demand.
 
 Raw tables are kept in expandable audit sections so the first view emphasizes insight while still preserving traceability.
